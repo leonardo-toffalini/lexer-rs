@@ -5,6 +5,8 @@ pub enum TokenType {
 
     Ident,
     Int,
+    Float,
+    String,
 
     // operators
     Assign, // =

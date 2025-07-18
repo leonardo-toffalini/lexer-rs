@@ -4,7 +4,7 @@ use std::str::Chars;
 use crate::token::Token;
 use crate::token::TokenType;
 
-pub fn lex(source: &str) -> Vec<Token> {
+pub fn lex(source: &str) -> Result<Vec<Token>, String> {
     let mut tokens: Vec<Token> = Vec::new();
     let mut chars = source.chars().peekable();
 
@@ -126,11 +126,23 @@ pub fn lex(source: &str) -> Vec<Token> {
             }
 
             // int
-            Some(c) if c.is_digit(10) => {
-                let int_lit = lex_int_lit(&mut chars, c);
-                tokens.push(Token {
+            Some(c) if c.is_digit(10) => match lex_int_lit(&mut chars, c) {
+                Numeric::Int(int_lit) => tokens.push(Token {
                     ttype: TokenType::Int,
                     literal: int_lit,
+                }),
+                Numeric::Float(float_lit) => tokens.push(Token {
+                    ttype: TokenType::Float,
+                    literal: float_lit,
+                }),
+            },
+
+            // string
+            Some('"') => {
+                let string_literal = lex_str_lit(&mut chars)?;
+                tokens.push(Token {
+                    ttype: TokenType::String,
+                    literal: string_literal,
                 })
             }
 
@@ -146,7 +158,7 @@ pub fn lex(source: &str) -> Vec<Token> {
         }
     }
 
-    return tokens;
+    return Ok(tokens);
 }
 
 fn lex_ident(chars: &mut Peekable<Chars>, first_char: char) -> String {
@@ -165,18 +177,45 @@ fn lex_ident(chars: &mut Peekable<Chars>, first_char: char) -> String {
     return ident;
 }
 
-fn lex_int_lit(chars: &mut Peekable<Chars>, first_char: char) -> String {
-    let mut int_lit = String::from(first_char);
+enum Numeric {
+    Int(String),
+    Float(String),
+}
+
+fn lex_int_lit(chars: &mut Peekable<Chars>, first_char: char) -> Numeric {
+    let mut literal = String::from(first_char);
+    let mut float_flag = false;
 
     loop {
         match chars.peek() {
+            Some('.') => {
+                chars.next();
+                literal.push('.');
+                float_flag = true;
+            }
             Some(c) if c.is_digit(10) => {
-                int_lit.push(*c);
+                literal.push(*c);
                 chars.next();
             }
             Some(_) | None => break,
         }
     }
 
-    return int_lit;
+    return if float_flag {
+        Numeric::Float(literal)
+    } else {
+        Numeric::Int(literal)
+    };
+}
+
+fn lex_str_lit(chars: &mut Peekable<Chars>) -> Result<String, String> {
+    let mut int_lit = String::from("");
+
+    loop {
+        match chars.next() {
+            Some('"') => return Ok(int_lit),
+            Some(c) => int_lit.push(c),
+            None => return Err(String::from("Lexical Error: Unterminated string literal.")),
+        }
+    }
 }
