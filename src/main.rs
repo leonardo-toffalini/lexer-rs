@@ -11,7 +11,7 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 }
 
 fn main() -> Result<(), io::Error> {
-    let contents = read_file_contents("examples/operators.mk")?;
+    let contents = read_file_contents("examples/ident.mk")?;
     println!("File contents: {}", contents);
 
     let tokens = lexer::lex(&contents);

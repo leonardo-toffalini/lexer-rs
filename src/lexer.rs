@@ -1,3 +1,6 @@
+use std::iter::Peekable;
+use std::str::Chars;
+
 use crate::token::Token;
 use crate::token::TokenType;
 
@@ -113,6 +116,24 @@ pub fn lex(source: &str) -> Vec<Token> {
                 literal: String::from("}"),
             }),
 
+            // ident
+            Some(c) if c.is_ascii_alphabetic() || c == '_' => {
+                let ident = lex_ident(&mut chars, c);
+                tokens.push(Token {
+                    ttype: TokenType::Ident,
+                    literal: ident,
+                });
+            }
+
+            // int
+            Some(c) if c.is_digit(10) => {
+                let int_lit = lex_int_lit(&mut chars, c);
+                tokens.push(Token {
+                    ttype: TokenType::Int,
+                    literal: int_lit,
+                })
+            }
+
             // other
             Some(c) => tokens.push(Token {
                 ttype: TokenType::Illegal,
@@ -126,4 +147,36 @@ pub fn lex(source: &str) -> Vec<Token> {
     }
 
     return tokens;
+}
+
+fn lex_ident(chars: &mut Peekable<Chars>, first_char: char) -> String {
+    let mut ident = String::from(first_char);
+
+    loop {
+        match chars.peek() {
+            Some(c) if c.is_ascii_alphanumeric() || *c == '_' => {
+                ident.push(*c);
+                chars.next();
+            }
+            Some(_) | None => break,
+        }
+    }
+
+    return ident;
+}
+
+fn lex_int_lit(chars: &mut Peekable<Chars>, first_char: char) -> String {
+    let mut int_lit = String::from(first_char);
+
+    loop {
+        match chars.peek() {
+            Some(c) if c.is_digit(10) => {
+                int_lit.push(*c);
+                chars.next();
+            }
+            Some(_) | None => break,
+        }
+    }
+
+    return int_lit;
 }
