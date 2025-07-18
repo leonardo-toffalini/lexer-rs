@@ -87,6 +87,32 @@ pub fn lex(source: &str) -> Vec<Token> {
                 }),
             },
 
+            // delimiters
+            Some(',') => tokens.push(Token {
+                ttype: TokenType::Comma,
+                literal: String::from(","),
+            }),
+            Some(';') => tokens.push(Token {
+                ttype: TokenType::Semicolon,
+                literal: String::from(";"),
+            }),
+            Some('(') => tokens.push(Token {
+                ttype: TokenType::LParen,
+                literal: String::from("("),
+            }),
+            Some(')') => tokens.push(Token {
+                ttype: TokenType::RParen,
+                literal: String::from(")"),
+            }),
+            Some('{') => tokens.push(Token {
+                ttype: TokenType::LBrace,
+                literal: String::from("{"),
+            }),
+            Some('}') => tokens.push(Token {
+                ttype: TokenType::RBrace,
+                literal: String::from("}"),
+            }),
+
             // other
             Some(c) => tokens.push(Token {
                 ttype: TokenType::Illegal,
