@@ -1,8 +1,22 @@
+use crate::token::Token;
+use crate::token::TokenType;
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use std::iter::Peekable;
 use std::str::Chars;
 
-use crate::token::Token;
-use crate::token::TokenType;
+// I have no clue what is going on here, I just wanted a global map of keywords.
+static KW_MAP: Lazy<HashMap<&'static str, TokenType>> = Lazy::new(|| {
+    let mut map = HashMap::new();
+    map.insert("fn", TokenType::Function);
+    map.insert("let", TokenType::Let);
+    map.insert("true", TokenType::TRUE);
+    map.insert("false", TokenType::FALSE);
+    map.insert("if", TokenType::If);
+    map.insert("else", TokenType::Else);
+    map.insert("return", TokenType::Return);
+    return map;
+});
 
 pub fn lex(source: &str) -> Result<Vec<Token>, String> {
     let mut tokens: Vec<Token> = Vec::new();
@@ -119,8 +133,9 @@ pub fn lex(source: &str) -> Result<Vec<Token>, String> {
             // ident
             Some(c) if c.is_ascii_alphabetic() || c == '_' => {
                 let ident = lex_ident(&mut chars, c);
+                let ttype = lookup_keyword(&ident);
                 tokens.push(Token {
-                    ttype: TokenType::Ident,
+                    ttype: ttype,
                     literal: ident,
                 });
             }
@@ -219,3 +234,27 @@ fn lex_str_lit(chars: &mut Peekable<Chars>) -> Result<String, String> {
         }
     }
 }
+
+fn lookup_keyword(ident: &str) -> TokenType {
+    match KW_MAP.get(ident) {
+        Some(kw_ttype) => *kw_ttype,
+        None => TokenType::Ident,
+    }
+}
+
+// pub fn look_up_ident(ident: String) -> TokenType {
+//   let kw = [
+//     #("fn", Function),
+//     #("let", Let),
+//     #("true", TRUE),
+//     #("false", FALSE),
+//     #("if", If),
+//     #("else", Else),
+//     #("return", Return),
+//   ]
+//   let keywords = dict.from_list(kw)
+//   case dict.get(keywords, ident) {
+//     Ok(v) -> v
+//     Error(Nil) -> Ident
+//   }
+// }
