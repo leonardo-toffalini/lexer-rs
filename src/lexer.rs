@@ -7,6 +7,13 @@ pub fn lex(source: &str) -> Vec<Token> {
 
     loop {
         match chars.next() {
+            // whitespace
+            Some(' ') => (),
+            Some('\n') => (),
+            Some('\t') => (),
+            Some('\r') => (),
+
+            // operators
             Some('+') => tokens.push(Token {
                 ttype: TokenType::Plus,
                 literal: String::from("+"),
@@ -15,32 +22,74 @@ pub fn lex(source: &str) -> Vec<Token> {
                 ttype: TokenType::Minus,
                 literal: String::from("-"),
             }),
-            Some(' ') => (),
-            Some('\n') => (),
-            Some('\t') => (),
-            Some('\r') => (),
+            Some('*') => tokens.push(Token {
+                ttype: TokenType::Star,
+                literal: String::from("*"),
+            }),
+            Some('/') => tokens.push(Token {
+                ttype: TokenType::Slash,
+                literal: String::from("/"),
+            }),
+            // = or ==
             Some('=') => match chars.peek() {
-                Some('=') => tokens.push(Token {
-                    ttype: TokenType::Eq,
-                    literal: String::from("=="),
+                Some('=') => {
+                    chars.next();
+                    tokens.push(Token {
+                        ttype: TokenType::Eq,
+                        literal: String::from("=="),
+                    })
+                }
+                Some(_) | None => tokens.push(Token {
+                    ttype: TokenType::Assign,
+                    literal: String::from("="),
                 }),
-                Some(_) => {
-                    chars.next();
-                    tokens.push(Token {
-                        ttype: TokenType::Assign,
-                        literal: String::from("="),
-                    });
-                }
-                None => {
-                    chars.next();
-                    tokens.push(Token {
-                        ttype: TokenType::Assign,
-                        literal: String::from("="),
-                    });
-                }
             },
+            // ! or !=
+            Some('!') => match chars.peek() {
+                Some('=') => {
+                    chars.next();
+                    tokens.push(Token {
+                        ttype: TokenType::Neq,
+                        literal: String::from("!="),
+                    })
+                }
+                Some(_) | None => tokens.push(Token {
+                    ttype: TokenType::Bang,
+                    literal: String::from("!"),
+                }),
+            },
+            // < or <=
+            Some('<') => match chars.peek() {
+                Some('=') => {
+                    chars.next();
+                    tokens.push(Token {
+                        ttype: TokenType::Le,
+                        literal: String::from("<="),
+                    })
+                }
+                Some(_) | None => tokens.push(Token {
+                    ttype: TokenType::Lt,
+                    literal: String::from("<"),
+                }),
+            },
+            // > or >=
+            Some('>') => match chars.peek() {
+                Some('=') => {
+                    chars.next();
+                    tokens.push(Token {
+                        ttype: TokenType::Ge,
+                        literal: String::from(">="),
+                    })
+                }
+                Some(_) | None => tokens.push(Token {
+                    ttype: TokenType::Gt,
+                    literal: String::from(">"),
+                }),
+            },
+
+            // other
             Some(c) => tokens.push(Token {
-                ttype: TokenType::Int,
+                ttype: TokenType::Illegal,
                 literal: c.to_string(),
             }),
             None => {

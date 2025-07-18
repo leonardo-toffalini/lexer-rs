@@ -3,11 +3,40 @@ pub enum TokenType {
     Illegal,
     EOF,
 
+    Ident,
     Int,
-    Plus,
-    Minus,
-    Eq,
-    Assign,
+
+    // operators
+    Assign, // =
+    Plus,   // +
+    Minus,  // -
+    Bang,   // !
+    Star,   // *
+    Slash,  // /
+
+    Eq,  // ==
+    Neq, // !=
+    Lt,  // <
+    Le,  // <=
+    Gt,  // >
+    Ge,  // >=
+
+    // delimiters,
+    Comma,
+    Semicolon,
+    LParen,
+    RParen,
+    LBrace,
+    RBrace,
+
+    // keywords,
+    Function,
+    Let,
+    TRUE,
+    FALSE,
+    If,
+    Else,
+    Return,
 }
 
 #[derive(Debug)]
