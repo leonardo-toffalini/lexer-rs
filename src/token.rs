@@ -5,6 +5,9 @@ pub enum TokenType {
 
     Int,
     Plus,
+    Minus,
+    Eq,
+    Assign,
 }
 
 #[derive(Debug)]
