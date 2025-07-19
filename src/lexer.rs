@@ -43,10 +43,17 @@ pub fn lex(source: &str) -> Result<Vec<Token>, String> {
                 ttype: TokenType::Star,
                 literal: String::from("*"),
             }),
-            Some('/') => tokens.push(Token {
-                ttype: TokenType::Slash,
-                literal: String::from("/"),
-            }),
+            // / or // (slash or comment)
+            Some('/') => match chars.peek() {
+                Some('/') => {
+                    chars.next();
+                    lex_comment(&mut chars);
+                }
+                Some(_) | None => tokens.push(Token {
+                    ttype: TokenType::Slash,
+                    literal: String::from("/"),
+                }),
+            },
             // = or ==
             Some('=') => match chars.peek() {
                 Some('=') => {
@@ -242,19 +249,11 @@ fn lookup_keyword(ident: &str) -> TokenType {
     }
 }
 
-// pub fn look_up_ident(ident: String) -> TokenType {
-//   let kw = [
-//     #("fn", Function),
-//     #("let", Let),
-//     #("true", TRUE),
-//     #("false", FALSE),
-//     #("if", If),
-//     #("else", Else),
-//     #("return", Return),
-//   ]
-//   let keywords = dict.from_list(kw)
-//   case dict.get(keywords, ident) {
-//     Ok(v) -> v
-//     Error(Nil) -> Ident
-//   }
-// }
+fn lex_comment(chars: &mut Peekable<Chars>) -> () {
+    loop {
+        match chars.next() {
+            Some('\n') | None => break,
+            Some(_) => (),
+        }
+    }
+}
