@@ -1,6 +1,8 @@
 use std::{fs::File, io, io::Read};
 
+pub mod ast;
 pub mod lexer;
+pub mod parser;
 pub mod token;
 
 fn read_file_contents(path: &str) -> Result<String, io::Error> {
@@ -10,12 +12,15 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
     return Ok(contents);
 }
 
-fn main() -> Result<(), io::Error> {
-    let contents = read_file_contents("examples/functions.mk")?;
+fn main() -> Result<(), String> {
+    let contents = read_file_contents("examples/let_statement.mk").unwrap();
     println!("File contents:\n{}", contents);
 
-    let tokens = lexer::lex(&contents);
-    println!("{:#?}", tokens);
+    let tokens = lexer::lex(&contents).unwrap();
+    // println!("{:#?}", tokens);
+
+    let ast = parser::parse(tokens);
+    println!("{:#?}", ast);
 
     Ok(())
 }
