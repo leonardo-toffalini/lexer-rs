@@ -13,7 +13,7 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 }
 
 fn main() -> Result<(), String> {
-    let contents = read_file_contents("examples/let_statement.mk").unwrap();
+    let contents = read_file_contents("examples/return_statement.mk").unwrap();
     println!("File contents:\n{}", contents);
 
     let tokens = lexer::lex(&contents).unwrap();
@@ -28,7 +28,9 @@ fn main() -> Result<(), String> {
 // Tests
 #[cfg(test)]
 mod tests {
+    use crate::ast;
     use crate::lexer;
+    use crate::parser;
     use crate::token::{Token, TokenType};
 
     #[test]
@@ -345,5 +347,34 @@ let adder = fn(a, b) {
         ];
 
         assert_eq!(result, Ok(expected));
+    }
+
+    #[test]
+    fn parse_let_stmt_test() {
+        let source = "let foo = 2 + 3;";
+        let tokens = lexer::lex(source).unwrap();
+        let result = parser::parse(tokens);
+        let expected = Ok(ast::Program {
+            statements: vec![ast::Statement::LetStatement {
+                name: ast::Identifier {
+                    value: String::from("foo"),
+                },
+                value: ast::Expression::EmptyExpression,
+            }],
+        });
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_return_stmt_test() {
+        let source = "return 2 + 3;";
+        let tokens = lexer::lex(source).unwrap();
+        let result = parser::parse(tokens);
+        let expected = Ok(ast::Program {
+            statements: vec![ast::Statement::ReturnStatement {
+                value: ast::Expression::EmptyExpression,
+            }],
+        });
+        assert_eq!(result, expected);
     }
 }

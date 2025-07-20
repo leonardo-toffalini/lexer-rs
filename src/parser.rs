@@ -34,9 +34,13 @@ fn parse_statement(tokens_iter: &mut Peekable<TokIter>, tok: &Token) -> Statemen
     match tok {
         Token {
             ttype: TokenType::Let,
-            literal: _,
+            ..
         } => return parse_let_statement(tokens_iter),
-        _ => return Err(String::from("Unexpected statment.")),
+        Token {
+            ttype: TokenType::Return,
+            ..
+        } => return parse_return_statement(tokens_iter),
+        _ => return Err(String::from("Unexpected statement.")),
     }
 }
 
@@ -76,4 +80,20 @@ fn parse_let_statement(tokens_iter: &mut Peekable<TokIter>) -> StatementResult {
             _ => (), // Skip/consume or handle other tokens
         }
     }
+}
+
+fn parse_return_statement(tokens_iter: &mut Peekable<TokIter>) -> StatementResult {
+    loop {
+        match tokens_iter.next() {
+            Some(Token {
+                ttype: TokenType::Semicolon,
+                ..
+            }) => break,
+            None => return Err(String::from("Expected semicolon")),
+            _ => (), // Skip/consume or handle other tokens
+        }
+    }
+    return Ok(ast::Statement::ReturnStatement {
+        value: ast::Expression::EmptyExpression,
+    });
 }
