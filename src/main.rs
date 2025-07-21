@@ -354,15 +354,16 @@ let adder = fn(a, b) {
     fn parse_let_stmt_test() {
         let source = "let foo = 2 + 3;";
         let tokens = lexer::lex(source).unwrap();
-        let result = parser::parse(tokens);
-        let expected = Ok(ast::Program {
+        let mut parser = parser::Parser::new(tokens);
+        let result = parser.parse();
+        let expected = ast::Program {
             statements: vec![ast::Statement::LetStatement {
                 name: ast::Identifier {
                     value: String::from("foo"),
                 },
                 value: ast::Expression::EmptyExpression,
             }],
-        });
+        };
         assert_eq!(result, expected);
     }
 
@@ -370,12 +371,13 @@ let adder = fn(a, b) {
     fn parse_return_stmt_test() {
         let source = "return 2 + 3;";
         let tokens = lexer::lex(source).unwrap();
-        let result = parser::parse(tokens);
-        let expected = Ok(ast::Program {
+        let mut parser = parser::Parser::new(tokens);
+        let result = parser.parse();
+        let expected = ast::Program {
             statements: vec![ast::Statement::ReturnStatement {
                 value: ast::Expression::EmptyExpression,
             }],
-        });
+        };
         assert_eq!(result, expected);
     }
 }
