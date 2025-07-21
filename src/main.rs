@@ -13,13 +13,14 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 }
 
 fn main() -> Result<(), String> {
-    let contents = read_file_contents("examples/return_statement.mk").unwrap();
+    let contents = read_file_contents("examples/let_statement.mk").unwrap();
     println!("File contents:\n{}", contents);
 
     let tokens = lexer::lex(&contents).unwrap();
     // println!("{:#?}", tokens);
 
-    let ast = parser::parse(tokens);
+    let mut parser = parser::Parser::new(tokens.clone());
+    let ast = parser.parse();
     println!("{:#?}", ast);
 
     Ok(())
