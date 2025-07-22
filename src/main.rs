@@ -13,7 +13,7 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 }
 
 fn main() -> Result<(), String> {
-    let contents = read_file_contents("examples/return_statement.mk").unwrap();
+    let contents = read_file_contents("examples/int_lit.mk").unwrap();
     println!("File contents:\n{}", contents);
 
     let tokens = lexer::lex(&contents).unwrap();
@@ -358,8 +358,8 @@ let adder = fn(a, b) {
         let result = parser.parse();
         let expected = ast::Program {
             statements: vec![ast::Statement::LetStatement {
-                name: ast::Identifier {
-                    value: String::from("foo"),
+                name: ast::Expression::Identifier {
+                    name: String::from("foo"),
                 },
                 value: ast::Expression::EmptyExpression,
             }],
@@ -376,6 +376,36 @@ let adder = fn(a, b) {
         let expected = ast::Program {
             statements: vec![ast::Statement::ReturnStatement {
                 value: ast::Expression::EmptyExpression,
+            }],
+        };
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_ident_expr_stmt_test() {
+        let source = "foo;";
+        let tokens = lexer::lex(source).unwrap();
+        let mut parser = parser::Parser::new(tokens);
+        let result = parser.parse();
+        let expected = ast::Program {
+            statements: vec![ast::Statement::ExpressionStatement {
+                expr: ast::Expression::Identifier {
+                    name: String::from("foo"),
+                },
+            }],
+        };
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_int_lit_expr_stmt_test() {
+        let source = "12345;";
+        let tokens = lexer::lex(source).unwrap();
+        let mut parser = parser::Parser::new(tokens);
+        let result = parser.parse();
+        let expected = ast::Program {
+            statements: vec![ast::Statement::ExpressionStatement {
+                expr: ast::Expression::IntegerLiteral { value: 12345 },
             }],
         };
         assert_eq!(result, expected);

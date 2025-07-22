@@ -40,6 +40,7 @@ impl Parser {
         };
 
         parser.register_prefix(TokenType::Ident, Parser::parse_identifier);
+        parser.register_prefix(TokenType::Int, Parser::parse_integer_literal);
 
         return parser;
     }
@@ -84,8 +85,8 @@ impl Parser {
             panic!("Expected Ident");
         }
 
-        let ident = ast::Identifier {
-            value: self.cur_token.literal.clone(),
+        let ident = ast::Expression::Identifier {
+            name: self.cur_token.literal.clone(),
         };
 
         if !self.expect_peek(TokenType::Assign) {
@@ -131,11 +132,20 @@ impl Parser {
             ),
         };
 
-        let left_expr = prefix();
+        let left_expr = prefix(self);
         return left_expr;
     }
 
-    fn parse_identifier(self: &mut Self) -> ast::Expression {}
+    fn parse_identifier(self: &mut Self) -> ast::Expression {
+        return ast::Expression::Identifier {
+            name: self.cur_token.literal.clone(),
+        };
+    }
+
+    fn parse_integer_literal(self: &mut Self) -> ast::Expression {
+        let int_lit = self.cur_token.literal.clone().parse::<i64>().unwrap();
+        return ast::Expression::IntegerLiteral { value: int_lit };
+    }
 
     fn cur_token_is(self: &mut Self, ttype: TokenType) -> bool {
         return ttype == self.cur_token.ttype;
