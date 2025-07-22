@@ -6,12 +6,12 @@ use crate::token::{Token, TokenType};
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Precedence {
     Lowest,
-    Equals,      // ==
-    LessGreater, // > or <
-    Sum,         // +
-    Product,     // *
-    Prefix,      // -X or !X
-    Call,        // myFunction(X)
+    Equality,       // == or !=
+    LessGreater,    // > or <
+    Additive,       // + or -
+    Multiplicative, // * or /
+    Prefix,         // -X or !X
+    Call,           // myFunction(X)
 }
 
 pub struct Parser {
@@ -21,6 +21,7 @@ pub struct Parser {
     tokens: Vec<Token>,
     prefix_parse_fns: HashMap<TokenType, PrefixParseFn>,
     infix_parse_fns: HashMap<TokenType, InfixParseFn>,
+    precedences: HashMap<TokenType, Precedence>,
 }
 
 type PrefixParseFn = for<'a> fn(&'a mut Parser) -> ast::Expression;
@@ -37,10 +38,47 @@ impl Parser {
             tokens,
             prefix_parse_fns: HashMap::new(),
             infix_parse_fns: HashMap::new(),
+            precedences: HashMap::new(),
         };
+
+        parser
+            .precedences
+            .insert(TokenType::Eq, Precedence::Equality);
+        parser
+            .precedences
+            .insert(TokenType::Neq, Precedence::Equality);
+        parser
+            .precedences
+            .insert(TokenType::Lt, Precedence::LessGreater);
+        parser
+            .precedences
+            .insert(TokenType::Gt, Precedence::LessGreater);
+        parser
+            .precedences
+            .insert(TokenType::Plus, Precedence::Additive);
+        parser
+            .precedences
+            .insert(TokenType::Minus, Precedence::Additive);
+        parser
+            .precedences
+            .insert(TokenType::Star, Precedence::Multiplicative);
+        parser
+            .precedences
+            .insert(TokenType::Slash, Precedence::Multiplicative);
 
         parser.register_prefix(TokenType::Ident, Parser::parse_identifier);
         parser.register_prefix(TokenType::Int, Parser::parse_integer_literal);
+        parser.register_prefix(TokenType::Bang, Parser::parse_prefix_expression);
+        parser.register_prefix(TokenType::Minus, Parser::parse_prefix_expression);
+
+        parser.register_infix(TokenType::Plus, Parser::parse_infix_expression);
+        parser.register_infix(TokenType::Minus, Parser::parse_infix_expression);
+        parser.register_infix(TokenType::Star, Parser::parse_infix_expression);
+        parser.register_infix(TokenType::Slash, Parser::parse_infix_expression);
+        parser.register_infix(TokenType::Eq, Parser::parse_infix_expression);
+        parser.register_infix(TokenType::Neq, Parser::parse_infix_expression);
+        parser.register_infix(TokenType::Lt, Parser::parse_infix_expression);
+        parser.register_infix(TokenType::Gt, Parser::parse_infix_expression);
 
         return parser;
     }
@@ -123,18 +161,38 @@ impl Parser {
         return ast::Statement::ExpressionStatement { expr };
     }
 
-    fn parse_expression(self: &mut Self, prec: Precedence) -> ast::Expression {
-        let prefix = match self.prefix_parse_fns.get(&self.cur_token.ttype) {
-            Some(v) => v,
-            None => panic!(
-                "Did not find prefix parse fn with ttype: {:#?}",
-                self.cur_token.ttype
-            ),
-        };
+    fn parse_expression(&mut self, prec: Precedence) -> ast::Expression {
+        let prefix = self.prefix_parse_fns.get(&self.cur_token.ttype).unwrap();
+        let mut left_expr = prefix(self);
 
-        let left_expr = prefix(self);
-        return left_expr;
+        // Loop for infix expressions with higher precedence
+        while !self.peek_token_is(TokenType::Semicolon) && prec < self.peek_precedence() {
+            let infix_fn_key = self.peek_token.ttype.clone();
+            let infix = match self.infix_parse_fns.get(&infix_fn_key) {
+                Some(func) => func.clone(),
+                None => break, // No infix parser available, stop parsing further
+            };
+
+            self.next_token(); // Advance to next token first
+            // Reassign left_expr using the infix function
+            left_expr = infix(self, left_expr);
+        }
+
+        left_expr
     }
+
+    // fn parse_expression(self: &mut Self, prec: Precedence) -> ast::Expression {
+    //     let prefix = self.prefix_parse_fns.get(&self.cur_token.ttype).unwrap();
+    //     let left_expr = prefix(self);
+    //
+    //     while !self.peek_token_is(TokenType::Semicolon) && prec < self.peek_precedence() {
+    //         let infix = self.infix_parse_fns.get(&self.peek_token.ttype).unwrap();
+    //         self.next_token();
+    //         let right_expr = infix(self, left_expr);
+    //     }
+    //
+    //     return left_expr;
+    // }
 
     fn parse_identifier(self: &mut Self) -> ast::Expression {
         return ast::Expression::Identifier {
@@ -145,6 +203,28 @@ impl Parser {
     fn parse_integer_literal(self: &mut Self) -> ast::Expression {
         let int_lit = self.cur_token.literal.clone().parse::<i64>().unwrap();
         return ast::Expression::IntegerLiteral { value: int_lit };
+    }
+
+    fn parse_prefix_expression(self: &mut Self) -> ast::Expression {
+        let prefix_operator = self.cur_token.literal.clone();
+        self.next_token();
+        let expr = self.parse_expression(Precedence::Prefix);
+        return ast::Expression::PrefixExpression {
+            operator: prefix_operator,
+            right: Box::new(expr),
+        };
+    }
+
+    fn parse_infix_expression(self: &mut Self, left: ast::Expression) -> ast::Expression {
+        let infix_operator = self.cur_token.literal.clone();
+        let prec = self.cur_precedence();
+        self.next_token();
+        let rexpr = self.parse_expression(prec);
+        return ast::Expression::InfixExpression {
+            left: Box::new(left),
+            operator: infix_operator,
+            right: Box::new(rexpr),
+        };
     }
 
     fn cur_token_is(self: &mut Self, ttype: TokenType) -> bool {
@@ -161,6 +241,20 @@ impl Parser {
             return true;
         } else {
             return false;
+        }
+    }
+
+    fn peek_precedence(self: &mut Self) -> Precedence {
+        match self.precedences.get(&self.peek_token.ttype) {
+            Some(prec) => *prec,
+            None => Precedence::Lowest,
+        }
+    }
+
+    fn cur_precedence(self: &mut Self) -> Precedence {
+        match self.precedences.get(&self.cur_token.ttype) {
+            Some(prec) => *prec,
+            None => Precedence::Lowest,
         }
     }
 }

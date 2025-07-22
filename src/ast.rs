@@ -15,8 +15,24 @@ pub enum Statement {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     EmptyExpression, // temporary for piecing together the parser
-    Identifier { name: String },
-    IntegerLiteral { value: i64 },
+    Identifier {
+        name: String,
+    },
+
+    IntegerLiteral {
+        value: i64,
+    },
+
+    PrefixExpression {
+        operator: String, // i dont like this being a String
+        right: Box<Expression>,
+    },
+
+    InfixExpression {
+        left: Box<Expression>,
+        operator: String, // i dont like this being a String
+        right: Box<Expression>,
+    },
 }
 
 #[derive(Debug, PartialEq)]
