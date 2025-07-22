@@ -10,6 +10,7 @@ pub enum Node {
 pub enum Statement {
     LetStatement { name: Identifier, value: Expression },
     ReturnStatement { value: Expression },
+    ExpressionStatement { expr: Expression },
 }
 
 #[derive(Debug, PartialEq)]
