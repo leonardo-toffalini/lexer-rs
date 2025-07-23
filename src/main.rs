@@ -13,7 +13,7 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 }
 
 fn main() -> Result<(), String> {
-    let contents = read_file_contents("examples/arithmetic.mk").unwrap();
+    let contents = read_file_contents("examples/grouped_expr.mk").unwrap();
     println!("File contents:\n{}", contents);
 
     let tokens = lexer::lex(&contents).unwrap();
@@ -490,6 +490,50 @@ let adder = fn(a, b) {
         let expected = ast::Program {
             statements: vec![ast::Statement::ExpressionStatement {
                 expr: ast::Expression::Boolean { value: false },
+            }],
+        };
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_op_prec_test() {
+        let source = "1 + 2 * 3;";
+        let tokens = lexer::lex(source).unwrap();
+        let mut parser = parser::Parser::new(tokens);
+        let result = parser.parse();
+        let expected = ast::Program {
+            statements: vec![ast::Statement::ExpressionStatement {
+                expr: ast::Expression::InfixExpression {
+                    left: Box::new(ast::Expression::IntegerLiteral { value: 1 }),
+                    operator: String::from("+"),
+                    right: Box::new(ast::Expression::InfixExpression {
+                        left: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
+                        operator: String::from("*"),
+                        right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
+                    }),
+                },
+            }],
+        };
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_grouped_expr_test() {
+        let source = "(1 + 2) * 3;";
+        let tokens = lexer::lex(source).unwrap();
+        let mut parser = parser::Parser::new(tokens);
+        let result = parser.parse();
+        let expected = ast::Program {
+            statements: vec![ast::Statement::ExpressionStatement {
+                expr: ast::Expression::InfixExpression {
+                    left: Box::new(ast::Expression::InfixExpression {
+                        left: Box::new(ast::Expression::IntegerLiteral { value: 1 }),
+                        operator: String::from("+"),
+                        right: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
+                    }),
+                    operator: String::from("*"),
+                    right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
+                },
             }],
         };
         assert_eq!(result, expected);
