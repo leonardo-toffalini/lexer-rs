@@ -33,6 +33,10 @@ pub enum Expression {
         operator: String, // i dont like this being a String
         right: Box<Expression>,
     },
+
+    Boolean {
+        value: bool,
+    },
 }
 
 #[derive(Debug, PartialEq)]

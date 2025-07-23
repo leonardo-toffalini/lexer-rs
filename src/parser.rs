@@ -70,6 +70,8 @@ impl Parser {
         parser.register_prefix(TokenType::Int, Parser::parse_integer_literal);
         parser.register_prefix(TokenType::Bang, Parser::parse_prefix_expression);
         parser.register_prefix(TokenType::Minus, Parser::parse_prefix_expression);
+        parser.register_prefix(TokenType::TRUE, Parser::parse_boolean);
+        parser.register_prefix(TokenType::FALSE, Parser::parse_boolean);
 
         parser.register_infix(TokenType::Plus, Parser::parse_infix_expression);
         parser.register_infix(TokenType::Minus, Parser::parse_infix_expression);
@@ -165,34 +167,19 @@ impl Parser {
         let prefix = self.prefix_parse_fns.get(&self.cur_token.ttype).unwrap();
         let mut left_expr = prefix(self);
 
-        // Loop for infix expressions with higher precedence
         while !self.peek_token_is(TokenType::Semicolon) && prec < self.peek_precedence() {
             let infix_fn_key = self.peek_token.ttype.clone();
             let infix = match self.infix_parse_fns.get(&infix_fn_key) {
                 Some(func) => func.clone(),
-                None => break, // No infix parser available, stop parsing further
+                None => break,
             };
 
-            self.next_token(); // Advance to next token first
-            // Reassign left_expr using the infix function
+            self.next_token();
             left_expr = infix(self, left_expr);
         }
 
-        left_expr
+        return left_expr;
     }
-
-    // fn parse_expression(self: &mut Self, prec: Precedence) -> ast::Expression {
-    //     let prefix = self.prefix_parse_fns.get(&self.cur_token.ttype).unwrap();
-    //     let left_expr = prefix(self);
-    //
-    //     while !self.peek_token_is(TokenType::Semicolon) && prec < self.peek_precedence() {
-    //         let infix = self.infix_parse_fns.get(&self.peek_token.ttype).unwrap();
-    //         self.next_token();
-    //         let right_expr = infix(self, left_expr);
-    //     }
-    //
-    //     return left_expr;
-    // }
 
     fn parse_identifier(self: &mut Self) -> ast::Expression {
         return ast::Expression::Identifier {
@@ -203,6 +190,12 @@ impl Parser {
     fn parse_integer_literal(self: &mut Self) -> ast::Expression {
         let int_lit = self.cur_token.literal.clone().parse::<i64>().unwrap();
         return ast::Expression::IntegerLiteral { value: int_lit };
+    }
+
+    fn parse_boolean(self: &mut Self) -> ast::Expression {
+        return ast::Expression::Boolean {
+            value: self.cur_token_is(TokenType::TRUE),
+        };
     }
 
     fn parse_prefix_expression(self: &mut Self) -> ast::Expression {

@@ -13,7 +13,7 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 }
 
 fn main() -> Result<(), String> {
-    let contents = read_file_contents("examples/add.mk").unwrap();
+    let contents = read_file_contents("examples/arithmetic.mk").unwrap();
     println!("File contents:\n{}", contents);
 
     let tokens = lexer::lex(&contents).unwrap();
@@ -462,6 +462,34 @@ let adder = fn(a, b) {
                     operator: String::from("-"),
                     right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
                 },
+            }],
+        };
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_true_bool_expr_stmt_test() {
+        let source = "true;";
+        let tokens = lexer::lex(source).unwrap();
+        let mut parser = parser::Parser::new(tokens);
+        let result = parser.parse();
+        let expected = ast::Program {
+            statements: vec![ast::Statement::ExpressionStatement {
+                expr: ast::Expression::Boolean { value: true },
+            }],
+        };
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_false_bool_expr_stmt_test() {
+        let source = "false;";
+        let tokens = lexer::lex(source).unwrap();
+        let mut parser = parser::Parser::new(tokens);
+        let result = parser.parse();
+        let expected = ast::Program {
+            statements: vec![ast::Statement::ExpressionStatement {
+                expr: ast::Expression::Boolean { value: false },
             }],
         };
         assert_eq!(result, expected);
