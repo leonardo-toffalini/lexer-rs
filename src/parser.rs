@@ -73,6 +73,7 @@ impl Parser {
         parser.register_prefix(TokenType::TRUE, Parser::parse_boolean);
         parser.register_prefix(TokenType::FALSE, Parser::parse_boolean);
         parser.register_prefix(TokenType::LParen, Parser::parse_grouped_expression);
+        parser.register_prefix(TokenType::If, Parser::parse_if_expression);
 
         parser.register_infix(TokenType::Plus, Parser::parse_infix_expression);
         parser.register_infix(TokenType::Minus, Parser::parse_infix_expression);
@@ -165,7 +166,13 @@ impl Parser {
     }
 
     fn parse_expression(&mut self, prec: Precedence) -> ast::Expression {
-        let prefix = self.prefix_parse_fns.get(&self.cur_token.ttype).unwrap();
+        let prefix = match self.prefix_parse_fns.get(&self.cur_token.ttype) {
+            Some(prefix) => prefix,
+            None => panic!(
+                "Did not find prefix parse fn for {:#?}",
+                self.cur_token.ttype
+            ),
+        };
         let mut left_expr = prefix(self);
 
         while !self.peek_token_is(TokenType::Semicolon) && prec < self.peek_precedence() {
@@ -206,6 +213,58 @@ impl Parser {
             panic!("expected TokenType::RParen");
         }
         return expr;
+    }
+
+    fn parse_if_expression(self: &mut Self) -> ast::Expression {
+        if !self.expect_peek(TokenType::LParen) {
+            panic!("expected TokenType::LParen");
+        }
+
+        self.next_token();
+        let cond = self.parse_expression(Precedence::Lowest);
+
+        if !self.expect_peek(TokenType::RParen) {
+            panic!("expected TokenType::RParen");
+        }
+
+        if !self.expect_peek(TokenType::LBrace) {
+            panic!("expected TokenType::LBrace");
+        }
+
+        let cons = self.parse_block_statement();
+
+        if self.peek_token_is(TokenType::Else) {
+            self.next_token();
+
+            if !self.expect_peek(TokenType::LBrace) {
+                panic!("expected TokenType::LBrace");
+            }
+            return ast::Expression::IfExpression {
+                condition: Box::new(cond),
+                consequence: Box::new(cons),
+                alternative: Some(Box::new(self.parse_block_statement())),
+            };
+        }
+
+        return ast::Expression::IfExpression {
+            condition: Box::new(cond),
+            consequence: Box::new(cons),
+            alternative: None,
+        };
+    }
+
+    fn parse_block_statement(self: &mut Self) -> ast::Statement {
+        let mut statements = Vec::new();
+
+        self.next_token();
+
+        while !self.cur_token_is(TokenType::RBrace) && !self.cur_token_is(TokenType::EOF) {
+            let stmt = self.parse_statement();
+            statements.push(stmt);
+            self.next_token();
+        }
+
+        return ast::Statement::BlockStatement { statements };
     }
 
     fn parse_prefix_expression(self: &mut Self) -> ast::Expression {

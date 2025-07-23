@@ -13,7 +13,7 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 }
 
 fn main() -> Result<(), String> {
-    let contents = read_file_contents("examples/grouped_expr.mk").unwrap();
+    let contents = read_file_contents("examples/if_expr.mk").unwrap();
     println!("File contents:\n{}", contents);
 
     let tokens = lexer::lex(&contents).unwrap();

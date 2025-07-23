@@ -10,6 +10,7 @@ pub enum Statement {
     LetStatement { name: Expression, value: Expression },
     ReturnStatement { value: Expression },
     ExpressionStatement { expr: Expression },
+    BlockStatement { statements: Vec<Statement> },
 }
 
 #[derive(Debug, PartialEq)]
@@ -36,6 +37,12 @@ pub enum Expression {
 
     Boolean {
         value: bool,
+    },
+
+    IfExpression {
+        condition: Box<Expression>,
+        consequence: Box<Statement>,
+        alternative: Option<Box<Statement>>,
     },
 }
 
