@@ -136,24 +136,25 @@ impl Parser {
             panic!("Expected Assign");
         }
 
-        while !self.cur_token_is(TokenType::Semicolon) {
-            self.next_token();
+        self.next_token();
+        let value = self.parse_expression(Precedence::Lowest);
+
+        if !self.expect_peek(TokenType::Semicolon) {
+            panic!("Expected TokenType::Semicolon");
         }
 
-        return ast::Statement::LetStatement {
-            name: ident,
-            value: ast::Expression::EmptyExpression,
-        };
+        return ast::Statement::LetStatement { name: ident, value };
     }
 
     fn parse_return_statement(self: &mut Self) -> ast::Statement {
         self.next_token();
-        while !self.cur_token_is(TokenType::Semicolon) {
-            self.next_token();
+        let value = self.parse_expression(Precedence::Lowest);
+
+        if !self.expect_peek(TokenType::Semicolon) {
+            panic!("Expected TokenType::Semicolon");
         }
-        return ast::Statement::ReturnStatement {
-            value: ast::Expression::EmptyExpression,
-        };
+
+        return ast::Statement::ReturnStatement { value };
     }
 
     fn parse_expression_statement(self: &mut Self) -> ast::Statement {

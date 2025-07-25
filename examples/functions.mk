@@ -1,1 +1,1 @@
-fn(a, b) { return a + b; };
+let add = fn(a, b) { return a + b; };
