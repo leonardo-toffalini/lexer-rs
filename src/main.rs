@@ -554,15 +554,58 @@ let adder = fn(a, b) {
         let mut parser = parser::Parser::new(tokens);
         let result = parser.parse();
         let expected = ast::Program {
-            statements: vec![ast::Statement::ExpressionStatement {
-                expr: ast::Expression::InfixExpression {
-                    left: Box::new(ast::Expression::InfixExpression {
-                        left: Box::new(ast::Expression::IntegerLiteral { value: 1 }),
-                        operator: String::from("+"),
-                        right: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
+            statements: vec![ast::Statement::LetStatement {
+                name: ast::Expression::Identifier {
+                    name: String::from("add"),
+                },
+                value: ast::Expression::FunctionLiteral {
+                    parameters: vec![
+                        ast::Expression::Identifier {
+                            name: String::from("x"),
+                        },
+                        ast::Expression::Identifier {
+                            name: String::from("y"),
+                        },
+                    ],
+                    body: Box::new(ast::Statement::BlockStatement {
+                        statements: vec![ast::Statement::ReturnStatement {
+                            value: ast::Expression::InfixExpression {
+                                left: Box::new(ast::Expression::Identifier {
+                                    name: String::from("x"),
+                                }),
+                                operator: String::from("+"),
+                                right: Box::new(ast::Expression::Identifier {
+                                    name: String::from("y"),
+                                }),
+                            },
+                        }],
                     }),
-                    operator: String::from("*"),
-                    right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
+                },
+            }],
+        };
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_call_expr_test() {
+        let source = "add(1, 2 + 3);";
+        let tokens = lexer::lex(source).unwrap();
+        let mut parser = parser::Parser::new(tokens);
+        let result = parser.parse();
+        let expected = ast::Program {
+            statements: vec![ast::Statement::ExpressionStatement {
+                expr: ast::Expression::CallExpression {
+                    function: Box::new(ast::Expression::Identifier {
+                        name: String::from("add"),
+                    }),
+                    arguments: vec![
+                        ast::Expression::IntegerLiteral { value: 1 },
+                        ast::Expression::InfixExpression {
+                            left: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
+                            operator: String::from("+"),
+                            right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
+                        },
+                    ],
                 },
             }],
         };
