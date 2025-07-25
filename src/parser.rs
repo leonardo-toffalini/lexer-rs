@@ -65,6 +65,9 @@ impl Parser {
         parser
             .precedences
             .insert(TokenType::Slash, Precedence::Multiplicative);
+        parser
+            .precedences
+            .insert(TokenType::LParen, Precedence::Call);
 
         parser.register_prefix(TokenType::Ident, Parser::parse_identifier);
         parser.register_prefix(TokenType::Int, Parser::parse_integer_literal);
@@ -84,6 +87,7 @@ impl Parser {
         parser.register_infix(TokenType::Neq, Parser::parse_infix_expression);
         parser.register_infix(TokenType::Lt, Parser::parse_infix_expression);
         parser.register_infix(TokenType::Gt, Parser::parse_infix_expression);
+        parser.register_infix(TokenType::LParen, Parser::parse_call_expression);
 
         return parser;
     }
@@ -301,7 +305,7 @@ impl Parser {
         }
 
         if !self.expect_peek(TokenType::RParen) {
-            panic!("Expected TokenType::RParen");
+            panic!("Expected TokenType::RParen in parse_function_parameters");
         }
 
         return identifiers;
@@ -319,6 +323,38 @@ impl Parser {
         }
 
         return ast::Statement::BlockStatement { statements };
+    }
+
+    fn parse_call_expression(self: &mut Self, left: ast::Expression) -> ast::Expression {
+        let args = self.parse_call_arguments();
+        return ast::Expression::CallExpression {
+            function: Box::new(left),
+            arguments: args,
+        };
+    }
+
+    fn parse_call_arguments(self: &mut Self) -> Vec<ast::Expression> {
+        let mut args = Vec::new();
+
+        if self.peek_token_is(TokenType::RParen) {
+            self.next_token();
+            return args;
+        }
+
+        self.next_token();
+        args.push(self.parse_expression(Precedence::Lowest));
+
+        while self.peek_token_is(TokenType::Comma) {
+            self.next_token();
+            self.next_token();
+            args.push(self.parse_expression(Precedence::Lowest));
+        }
+
+        if !self.expect_peek(TokenType::RParen) {
+            panic!("Expected TokenType::RParen in parse_call_arguments");
+        }
+
+        return args;
     }
 
     fn parse_prefix_expression(self: &mut Self) -> ast::Expression {
