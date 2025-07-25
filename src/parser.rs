@@ -74,6 +74,7 @@ impl Parser {
         parser.register_prefix(TokenType::FALSE, Parser::parse_boolean);
         parser.register_prefix(TokenType::LParen, Parser::parse_grouped_expression);
         parser.register_prefix(TokenType::If, Parser::parse_if_expression);
+        parser.register_prefix(TokenType::Function, Parser::parse_function_literal);
 
         parser.register_infix(TokenType::Plus, Parser::parse_infix_expression);
         parser.register_infix(TokenType::Minus, Parser::parse_infix_expression);
@@ -251,6 +252,58 @@ impl Parser {
             consequence: Box::new(cons),
             alternative: None,
         };
+    }
+
+    fn parse_function_literal(self: &mut Self) -> ast::Expression {
+        if !self.expect_peek(TokenType::LParen) {
+            panic!("expected TokenType::LParen");
+        }
+
+        let params = self.parse_function_parameters();
+
+        if !self.expect_peek(TokenType::LBrace) {
+            panic!("expected TokenType::LBrace");
+        }
+
+        let body = self.parse_block_statement();
+
+        return ast::Expression::FunctionLiteral {
+            parameters: params,
+            body: Box::new(body),
+        };
+    }
+
+    fn parse_function_parameters(self: &mut Self) -> Vec<ast::Expression> {
+        let mut identifiers = Vec::new();
+
+        // empty parameter list
+        if self.peek_token_is(TokenType::RParen) {
+            self.next_token();
+            return identifiers;
+        }
+
+        self.next_token();
+
+        let ident = ast::Expression::Identifier {
+            name: self.cur_token.literal.clone(),
+        };
+        identifiers.push(ident);
+
+        while self.peek_token_is(TokenType::Comma) {
+            self.next_token();
+            self.next_token();
+
+            let ident = ast::Expression::Identifier {
+                name: self.cur_token.literal.clone(),
+            };
+            identifiers.push(ident);
+        }
+
+        if !self.expect_peek(TokenType::RParen) {
+            panic!("Expected TokenType::RParen");
+        }
+
+        return identifiers;
     }
 
     fn parse_block_statement(self: &mut Self) -> ast::Statement {

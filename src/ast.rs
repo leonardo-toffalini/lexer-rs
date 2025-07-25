@@ -44,6 +44,11 @@ pub enum Expression {
         consequence: Box<Statement>,
         alternative: Option<Box<Statement>>,
     },
+
+    FunctionLiteral {
+        parameters: Vec<Expression>,
+        body: Box<Statement>,
+    },
 }
 
 #[derive(Debug, PartialEq)]
