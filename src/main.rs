@@ -13,7 +13,7 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 }
 
 fn main() -> Result<(), String> {
-    let contents = read_file_contents("examples/functions.mk").unwrap();
+    let contents = read_file_contents("examples/call_expr.mk").unwrap();
     println!("File contents:\n{}", contents);
 
     let tokens = lexer::lex(&contents).unwrap();
@@ -361,7 +361,11 @@ let adder = fn(a, b) {
                 name: ast::Expression::Identifier {
                     name: String::from("foo"),
                 },
-                value: ast::Expression::EmptyExpression,
+                value: ast::Expression::InfixExpression {
+                    left: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
+                    operator: String::from("+"),
+                    right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
+                },
             }],
         };
         assert_eq!(result, expected);
@@ -375,7 +379,11 @@ let adder = fn(a, b) {
         let result = parser.parse();
         let expected = ast::Program {
             statements: vec![ast::Statement::ReturnStatement {
-                value: ast::Expression::EmptyExpression,
+                value: ast::Expression::InfixExpression {
+                    left: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
+                    operator: String::from("+"),
+                    right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
+                },
             }],
         };
         assert_eq!(result, expected);
