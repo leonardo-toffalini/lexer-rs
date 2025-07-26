@@ -28,6 +28,7 @@ fn main() -> Result<(), String> {
 
     let mut parser = parser::Parser::new(tokens.clone());
     let program = parser.parse();
+    println!("\nProgram: \n{}", program);
     println!("\nAST: \n{:#?}", program);
     println!("\nErrors: \n{:#?}", parser.errors);
 

@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, PartialEq)]
 pub enum Node {
     ProgramNode(Program),
@@ -70,5 +72,92 @@ impl Program {
 
     pub fn push(self: &mut Self, stmt: Statement) -> () {
         self.statements.push(stmt);
+    }
+}
+
+impl fmt::Display for Program {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for (i, item) in self.statements.iter().enumerate() {
+            if i > 0 {
+                writeln!(f)?;
+            }
+            write!(f, "{}", item)?;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Display for Statement {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Statement::LetStatement { name, value } => write!(f, "let {} = {};", name, value)?,
+            Statement::ReturnStatement { value } => write!(f, "return {};", value)?,
+            Statement::BlockStatement { statements } => write!(
+                f,
+                "{{{}}}",
+                statements
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            )?,
+            Statement::ExpressionStatement { expr } => write!(f, "{};", expr)?,
+        }
+        return Ok(());
+    }
+}
+
+impl fmt::Display for Expression {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Expression::EmptyExpression => write!(f, "")?,
+            Expression::Identifier { name } => write!(f, "{}", name)?,
+            Expression::IntegerLiteral { value } => write!(f, "{}", value)?,
+            Expression::PrefixExpression { operator, right } => {
+                write!(f, "({}{})", operator, right)?
+            }
+            Expression::InfixExpression {
+                left,
+                operator,
+                right,
+            } => write!(f, "({} {} {})", left, operator, right)?,
+            Expression::Boolean { value } => write!(f, "({})", value)?,
+            Expression::IfExpression {
+                condition,
+                consequence,
+                alternative,
+            } => match alternative {
+                None => write!(f, "if ({}) ({})", condition, consequence)?,
+                Some(alternative) => {
+                    write!(f, "if ({}) {} else {}", condition, consequence, alternative)?
+                }
+            },
+            Expression::FunctionLiteral { parameters, body } => {
+                write!(
+                    f,
+                    "fn ({}) {}",
+                    parameters
+                        .iter()
+                        .map(|e| e.to_string())
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    body
+                )?;
+            }
+            Expression::CallExpression {
+                function,
+                arguments,
+            } => write!(
+                f,
+                "{}({})",
+                function,
+                arguments
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )?,
+        }
+        return Ok(());
     }
 }
