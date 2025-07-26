@@ -27,8 +27,9 @@ fn main() -> Result<(), String> {
     let tokens = lexer::lex(&contents).unwrap();
 
     let mut parser = parser::Parser::new(tokens.clone());
-    let ast = parser.parse();
-    println!("{:#?}", ast);
+    let program = parser.parse();
+    println!("\nAST: \n{:#?}", program);
+    println!("\nErrors: \n{:#?}", parser.errors);
 
     Ok(())
 }
