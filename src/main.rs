@@ -1,4 +1,4 @@
-use std::{fs::File, io, io::Read};
+use std::{env, fs::File, io, io::Read};
 
 pub mod ast;
 pub mod lexer;
@@ -13,11 +13,18 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 }
 
 fn main() -> Result<(), String> {
-    let contents = read_file_contents("examples/call_expr.mk").unwrap();
+    let args: Vec<String> = env::args().collect();
+    let mode = &args[1];
+
+    let contents = match mode.as_str() {
+        "inline" => &args[2],
+        "file" => &read_file_contents(&args[2]).unwrap(),
+        m => panic!("Invalid mode: {}, valid modes are 'inline' and 'file'.", m),
+    };
+
     println!("File contents:\n{}", contents);
 
     let tokens = lexer::lex(&contents).unwrap();
-    // println!("{:#?}", tokens);
 
     let mut parser = parser::Parser::new(tokens.clone());
     let ast = parser.parse();
