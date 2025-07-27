@@ -8,6 +8,15 @@ pub enum Node {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum Operator {
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    Bang,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     LetStatement { name: Expression, value: Expression },
     ReturnStatement { value: Expression },
@@ -17,7 +26,6 @@ pub enum Statement {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    EmptyExpression, // temporary for piecing together the parser
     Identifier {
         name: String,
     },
@@ -27,13 +35,13 @@ pub enum Expression {
     },
 
     PrefixExpression {
-        operator: String, // i dont like this being a String
+        operator: Operator,
         right: Box<Expression>,
     },
 
     InfixExpression {
         left: Box<Expression>,
-        operator: String, // i dont like this being a String
+        operator: Operator,
         right: Box<Expression>,
     },
 
@@ -87,6 +95,18 @@ impl fmt::Display for Program {
     }
 }
 
+impl fmt::Display for Operator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Operator::Plus => write!(f, "+"),
+            Operator::Minus => write!(f, "-"),
+            Operator::Star => write!(f, "*"),
+            Operator::Slash => write!(f, "/"),
+            Operator::Bang => write!(f, "!"),
+        }
+    }
+}
+
 impl fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -110,7 +130,6 @@ impl fmt::Display for Statement {
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expression::EmptyExpression => write!(f, "")?,
             Expression::Identifier { name } => write!(f, "{}", name)?,
             Expression::IntegerLiteral { value } => write!(f, "{}", value)?,
             Expression::PrefixExpression { operator, right } => {

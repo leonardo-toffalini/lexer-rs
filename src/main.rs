@@ -372,7 +372,7 @@ let adder = fn(a, b) {
                 },
                 value: ast::Expression::InfixExpression {
                     left: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
-                    operator: String::from("+"),
+                    operator: ast::Operator::Plus,
                     right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
                 },
             }],
@@ -390,7 +390,7 @@ let adder = fn(a, b) {
             statements: vec![ast::Statement::ReturnStatement {
                 value: ast::Expression::InfixExpression {
                     left: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
-                    operator: String::from("+"),
+                    operator: ast::Operator::Plus,
                     right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
                 },
             }],
@@ -437,7 +437,7 @@ let adder = fn(a, b) {
         let expected = ast::Program {
             statements: vec![ast::Statement::ExpressionStatement {
                 expr: ast::Expression::PrefixExpression {
-                    operator: String::from("-"),
+                    operator: ast::Operator::Minus,
                     right: Box::new(ast::Expression::IntegerLiteral { value: 12345 }),
                 },
             }],
@@ -454,7 +454,7 @@ let adder = fn(a, b) {
         let expected = ast::Program {
             statements: vec![ast::Statement::ExpressionStatement {
                 expr: ast::Expression::PrefixExpression {
-                    operator: String::from("!"),
+                    operator: ast::Operator::Bang,
                     right: Box::new(ast::Expression::IntegerLiteral { value: 12345 }),
                 },
             }],
@@ -473,10 +473,10 @@ let adder = fn(a, b) {
                 expr: ast::Expression::InfixExpression {
                     left: Box::new(ast::Expression::InfixExpression {
                         left: Box::new(ast::Expression::IntegerLiteral { value: 1 }),
-                        operator: String::from("+"),
+                        operator: ast::Operator::Plus,
                         right: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
                     }),
-                    operator: String::from("-"),
+                    operator: ast::Operator::Minus,
                     right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
                 },
             }],
@@ -522,10 +522,10 @@ let adder = fn(a, b) {
             statements: vec![ast::Statement::ExpressionStatement {
                 expr: ast::Expression::InfixExpression {
                     left: Box::new(ast::Expression::IntegerLiteral { value: 1 }),
-                    operator: String::from("+"),
+                    operator: ast::Operator::Plus,
                     right: Box::new(ast::Expression::InfixExpression {
                         left: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
-                        operator: String::from("*"),
+                        operator: ast::Operator::Star,
                         right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
                     }),
                 },
@@ -545,10 +545,10 @@ let adder = fn(a, b) {
                 expr: ast::Expression::InfixExpression {
                     left: Box::new(ast::Expression::InfixExpression {
                         left: Box::new(ast::Expression::IntegerLiteral { value: 1 }),
-                        operator: String::from("+"),
+                        operator: ast::Operator::Plus,
                         right: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
                     }),
-                    operator: String::from("*"),
+                    operator: ast::Operator::Star,
                     right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
                 },
             }],
@@ -582,7 +582,7 @@ let adder = fn(a, b) {
                                 left: Box::new(ast::Expression::Identifier {
                                     name: String::from("x"),
                                 }),
-                                operator: String::from("+"),
+                                operator: ast::Operator::Plus,
                                 right: Box::new(ast::Expression::Identifier {
                                     name: String::from("y"),
                                 }),
@@ -611,7 +611,7 @@ let adder = fn(a, b) {
                         ast::Expression::IntegerLiteral { value: 1 },
                         ast::Expression::InfixExpression {
                             left: Box::new(ast::Expression::IntegerLiteral { value: 2 }),
-                            operator: String::from("+"),
+                            operator: ast::Operator::Plus,
                             right: Box::new(ast::Expression::IntegerLiteral { value: 3 }),
                         },
                     ],

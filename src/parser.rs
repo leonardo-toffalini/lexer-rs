@@ -386,7 +386,7 @@ impl Parser {
     }
 
     fn parse_prefix_expression(self: &mut Self) -> Result<ast::Expression, String> {
-        let prefix_operator = self.cur_token.literal.clone();
+        let prefix_operator = operator_from_str(&self.cur_token.literal)?;
         self.next_token();
         let expr = self.parse_expression(Precedence::Prefix)?;
         return Ok(ast::Expression::PrefixExpression {
@@ -399,7 +399,7 @@ impl Parser {
         self: &mut Self,
         left: ast::Expression,
     ) -> Result<ast::Expression, String> {
-        let infix_operator = self.cur_token.literal.clone();
+        let infix_operator = operator_from_str(&self.cur_token.literal)?;
         let prec = self.cur_precedence();
         self.next_token();
         let rexpr = self.parse_expression(prec)?;
@@ -439,5 +439,16 @@ impl Parser {
             Some(prec) => *prec,
             None => Precedence::Lowest,
         }
+    }
+}
+
+fn operator_from_str(op_str: &str) -> Result<ast::Operator, String> {
+    match op_str {
+        "+" => Ok(ast::Operator::Plus),
+        "-" => Ok(ast::Operator::Minus),
+        "*" => Ok(ast::Operator::Star),
+        "/" => Ok(ast::Operator::Slash),
+        "!" => Ok(ast::Operator::Bang),
+        _ => Err(format!("Not a valid operator: {}", op_str)),
     }
 }
