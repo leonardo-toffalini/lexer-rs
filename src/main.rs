@@ -1,7 +1,11 @@
 use std::{env, fs::File, io, io::Read};
 
+use crate::evaluate::eval;
+
 pub mod ast;
+pub mod evaluate;
 pub mod lexer;
+pub mod object;
 pub mod parser;
 pub mod token;
 
@@ -50,6 +54,9 @@ fn main() -> Result<(), String> {
         println!("{}", monkey_face);
         println!("\nHere are the errors we collected: \n{:#?}", parser.errors);
     }
+
+    let eval_result = eval(ast::Node::ProgramNode(program));
+    println!("\nEval result:\n{:#?}", eval_result);
 
     Ok(())
 }

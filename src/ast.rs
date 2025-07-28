@@ -1,10 +1,9 @@
 use std::fmt;
 
-#[derive(Debug, PartialEq)]
 pub enum Node {
     ProgramNode(Program),
-    ExpressionNode,
     StatementNode(Statement),
+    ExpressionNode(Expression),
 }
 
 #[derive(Debug, PartialEq)]
