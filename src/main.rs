@@ -28,9 +28,28 @@ fn main() -> Result<(), String> {
 
     let mut parser = parser::Parser::new(tokens.clone());
     let program = parser.parse();
-    println!("\nProgram: \n{}", program);
-    println!("\nAST: \n{:#?}", program);
-    println!("\nErrors: \n{:#?}", parser.errors);
+
+    if parser.errors.len() == 0 {
+        println!("\nProgram: \n{}", program);
+        println!("\nAST: \n{:#?}", program);
+    } else {
+        let monkey_face = r#"
+           __,__
+  .--.  .-"     "-.  .--.
+ / .. \/  .-. .-.  \/ .. \
+| |  '|  /   Y   \  |'  | |
+| \   \  \ 0 | 0 /  /   / |
+ \ '- ,\.-"""""""-./, -' /
+  ''-' /_   ^ ^   _\ '-''
+      |  \._   _./  |
+      \   \ '~' /   /
+       '._ '-=-' _.'
+          '-----'
+"#;
+        println!("\nOops! We ran into some monkey business!");
+        println!("{}", monkey_face);
+        println!("\nHere are the errors we collected: \n{:#?}", parser.errors);
+    }
 
     Ok(())
 }
