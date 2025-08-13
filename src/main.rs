@@ -723,4 +723,59 @@ let adder = fn(a, b) {
             assert_eq!(result, *expected);
         }
     }
+
+    #[test]
+    fn eval_infix_test() {
+        let sources = vec![
+            "true == true;",
+            "true == false;",
+            "true != true;",
+            "true != false;",
+        ];
+        let expecteds = vec![
+            Object::Boolean { value: true },
+            Object::Boolean { value: false },
+            Object::Boolean { value: false },
+            Object::Boolean { value: true },
+        ];
+
+        for (source, expected) in sources.iter().zip(expecteds.iter()) {
+            let tokens = lexer::lex(source).unwrap();
+            let mut parser = parser::Parser::new(tokens);
+            let program = parser.parse();
+            let result = eval(ast::Node::ProgramNode(program));
+            assert_eq!(result, *expected);
+        }
+    }
+
+    #[test]
+    fn eval_if_expression_test() {
+        let sources = vec![
+            "if (true) { 10 }",
+            "if (false) { 10 }",
+            "if (1) { 10 }",
+            "if (1 < 2) { 10 }",
+            "if (1 > 2) { 10 }",
+            "if (1 > 2) { 10 } else { 20 }",
+            "if (1 < 2) { 10 } else { 20 }",
+        ];
+
+        let expecteds = vec![
+            Object::Integer { value: 10 },
+            Object::Null,
+            Object::Integer { value: 10 },
+            Object::Integer { value: 10 },
+            Object::Null,
+            Object::Integer { value: 20 },
+            Object::Integer { value: 10 },
+        ];
+
+        for (source, expected) in sources.iter().zip(expecteds.iter()) {
+            let tokens = lexer::lex(source).unwrap();
+            let mut parser = parser::Parser::new(tokens);
+            let program = parser.parse();
+            let result = eval(ast::Node::ProgramNode(program));
+            assert_eq!(result, *expected);
+        }
+    }
 }

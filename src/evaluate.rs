@@ -12,9 +12,16 @@ pub fn eval(node: ast::Node) -> Object {
         ProgramNode(Program { statements }) => evaluate_statements(statements),
 
         StatementNode(Statement::ExpressionStatement { expr }) => eval(ExpressionNode(expr)),
+        StatementNode(Statement::BlockStatement { statements }) => evaluate_statements(statements),
 
         ExpressionNode(Expression::IntegerLiteral { value }) => Object::Integer { value },
         ExpressionNode(Expression::Boolean { value }) => native_bool_to_object(value),
+        ExpressionNode(Expression::IfExpression {
+            condition,
+            consequence,
+            alternative,
+        }) => eval_if_expression(condition, consequence, alternative),
+
         ExpressionNode(Expression::PrefixExpression { operator, right }) => {
             let right = eval(ExpressionNode(*right));
             eval_prefix_expression(operator, right)
@@ -54,10 +61,12 @@ fn eval_prefix_expression(operator: Operator, right: Object) -> Object {
 }
 
 fn eval_infix_expression(left: Object, operator: Operator, right: Object) -> Object {
-    match (left, right) {
-        (Object::Integer { value: lvalue }, Object::Integer { value: rvalue }) => {
+    match (left, operator, right) {
+        (Object::Integer { value: lvalue }, operator, Object::Integer { value: rvalue }) => {
             eval_infix_int_expression(lvalue, operator, rvalue)
         }
+        (left, Operator::Eq, right) => native_bool_to_object(left == right),
+        (left, Operator::Neq, right) => native_bool_to_object(left != right),
         _ => NULL,
     }
 }
@@ -86,6 +95,26 @@ fn eval_minus_operator(right: Object) -> Object {
     match right {
         Object::Integer { value } => Object::Integer { value: -value },
         _ => panic!("Minus prefix oeprator used on not integer type"),
+    }
+}
+
+fn eval_if_expression(
+    condition: Box<Expression>,
+    consequence: Box<Statement>,
+    alternative: Option<Box<Statement>>,
+) -> Object {
+    let cond_obj = eval(ExpressionNode(*condition));
+    let cons_obj = eval(StatementNode(*consequence));
+
+    if is_truthy(cond_obj) {
+        return cons_obj;
+    }
+
+    match alternative {
+        None => NULL,
+        Some(stmt) => {
+            return eval(StatementNode(*stmt));
+        }
     }
 }
 
