@@ -13,6 +13,12 @@ pub enum Operator {
     Star,
     Slash,
     Bang,
+    Eq,
+    Neq,
+    Lt,
+    Le,
+    Gt,
+    Ge,
 }
 
 #[derive(Debug, PartialEq)]
@@ -102,6 +108,12 @@ impl fmt::Display for Operator {
             Operator::Star => write!(f, "*"),
             Operator::Slash => write!(f, "/"),
             Operator::Bang => write!(f, "!"),
+            Operator::Eq => write!(f, "=="),
+            Operator::Neq => write!(f, "!="),
+            Operator::Lt => write!(f, "<"),
+            Operator::Le => write!(f, "<="),
+            Operator::Gt => write!(f, ">"),
+            Operator::Ge => write!(f, ">="),
         }
     }
 }

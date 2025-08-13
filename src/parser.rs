@@ -54,7 +54,13 @@ impl Parser {
             .insert(TokenType::Lt, Precedence::LessGreater);
         parser
             .precedences
+            .insert(TokenType::Le, Precedence::LessGreater);
+        parser
+            .precedences
             .insert(TokenType::Gt, Precedence::LessGreater);
+        parser
+            .precedences
+            .insert(TokenType::Ge, Precedence::LessGreater);
         parser
             .precedences
             .insert(TokenType::Plus, Precedence::Additive);
@@ -88,7 +94,9 @@ impl Parser {
         parser.register_infix(TokenType::Eq, Parser::parse_infix_expression);
         parser.register_infix(TokenType::Neq, Parser::parse_infix_expression);
         parser.register_infix(TokenType::Lt, Parser::parse_infix_expression);
+        parser.register_infix(TokenType::Le, Parser::parse_infix_expression);
         parser.register_infix(TokenType::Gt, Parser::parse_infix_expression);
+        parser.register_infix(TokenType::Ge, Parser::parse_infix_expression);
         parser.register_infix(TokenType::LParen, Parser::parse_call_expression);
 
         return parser;
@@ -449,6 +457,12 @@ fn operator_from_str(op_str: &str) -> Result<ast::Operator, String> {
         "*" => Ok(ast::Operator::Star),
         "/" => Ok(ast::Operator::Slash),
         "!" => Ok(ast::Operator::Bang),
+        "==" => Ok(ast::Operator::Eq),
+        "!=" => Ok(ast::Operator::Neq),
+        "<" => Ok(ast::Operator::Lt),
+        "<=" => Ok(ast::Operator::Le),
+        ">" => Ok(ast::Operator::Gt),
+        ">=" => Ok(ast::Operator::Ge),
         _ => Err(format!("Not a valid operator: {}", op_str)),
     }
 }

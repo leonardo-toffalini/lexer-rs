@@ -1,6 +1,5 @@
-use std::{env, fs::File, io, io::Read};
-
 use crate::evaluate::eval;
+use std::{env, fs::File, io, io::Read};
 
 pub mod ast;
 pub mod evaluate;
@@ -65,7 +64,9 @@ fn main() -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use crate::ast;
+    use crate::evaluate::eval;
     use crate::lexer;
+    use crate::object::Object;
     use crate::parser;
     use crate::token::{Token, TokenType};
 
@@ -645,5 +646,81 @@ let adder = fn(a, b) {
             }],
         };
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn eval_int_lit_test() {
+        let source = "123;";
+        let tokens = lexer::lex(source).unwrap();
+        let mut parser = parser::Parser::new(tokens);
+        let program = parser.parse();
+        let result = eval(ast::Node::ProgramNode(program));
+        let expected = Object::Integer { value: 123 };
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn eval_prefix_bang_test() {
+        let sources = vec!["!true;", "!false;", "!123;", "!0;"];
+        let expecteds = vec![
+            Object::Boolean { value: false },
+            Object::Boolean { value: true },
+            Object::Boolean { value: false },
+            Object::Boolean { value: true },
+        ];
+
+        for (source, expected) in sources.iter().zip(expecteds.iter()) {
+            let tokens = lexer::lex(source).unwrap();
+            let mut parser = parser::Parser::new(tokens);
+            let program = parser.parse();
+            let result = eval(ast::Node::ProgramNode(program));
+            assert_eq!(result, *expected);
+        }
+    }
+
+    #[test]
+    fn eval_prefix_minus_test() {
+        let sources = vec!["-56;", "--42;", "---37;"];
+        let expecteds = vec![
+            Object::Integer { value: -56 },
+            Object::Integer { value: 42 },
+            Object::Integer { value: -37 },
+        ];
+
+        for (source, expected) in sources.iter().zip(expecteds.iter()) {
+            let tokens = lexer::lex(source).unwrap();
+            let mut parser = parser::Parser::new(tokens);
+            let program = parser.parse();
+            let result = eval(ast::Node::ProgramNode(program));
+            assert_eq!(result, *expected);
+        }
+    }
+
+    #[test]
+    fn eval_infix_int_test() {
+        let sources = vec![
+            "1 + 1;", "3 - 1;", "5 * 8;", "12 / 3;", "1 == 2;", "1 != 2;", "1 < 2;", "1 <= 2;",
+            "1 > 2;", "1 >= 2;",
+        ];
+        let expecteds = vec![
+            Object::Integer { value: 2 },
+            Object::Integer { value: 2 },
+            Object::Integer { value: 40 },
+            Object::Integer { value: 4 },
+            Object::Boolean { value: false },
+            Object::Boolean { value: true },
+            Object::Boolean { value: true },
+            Object::Boolean { value: true },
+            Object::Boolean { value: false },
+            Object::Boolean { value: false },
+        ];
+
+        for (source, expected) in sources.iter().zip(expecteds.iter()) {
+            let tokens = lexer::lex(source).unwrap();
+            let mut parser = parser::Parser::new(tokens);
+            let program = parser.parse();
+            let result = eval(ast::Node::ProgramNode(program));
+            assert_eq!(result, *expected);
+        }
     }
 }
