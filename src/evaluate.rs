@@ -3,10 +3,6 @@ use crate::ast::{self, Operator, Statement};
 use crate::ast::{Expression, Program};
 use crate::object::Object;
 
-static TRUE: Object = Object::Boolean { value: true };
-static FALSE: Object = Object::Boolean { value: false };
-static NULL: Object = Object::Null;
-
 pub fn eval(node: ast::Node) -> Object {
     match node {
         ProgramNode(Program { statements }) => evaluate_statements(statements),
@@ -43,7 +39,7 @@ pub fn eval(node: ast::Node) -> Object {
 }
 
 fn evaluate_statements(statements: Vec<Statement>) -> Object {
-    let mut result = NULL;
+    let mut result = Object::Null;
 
     for statement in statements {
         result = eval(StatementNode(statement));
@@ -56,7 +52,7 @@ fn eval_prefix_expression(operator: Operator, right: Object) -> Object {
     match operator {
         Operator::Bang => eval_bang_operator(right),
         Operator::Minus => eval_minus_operator(right),
-        _ => NULL,
+        _ => Object::Null,
     }
 }
 
@@ -67,14 +63,14 @@ fn eval_infix_expression(left: Object, operator: Operator, right: Object) -> Obj
         }
         (left, Operator::Eq, right) => native_bool_to_object(left == right),
         (left, Operator::Neq, right) => native_bool_to_object(left != right),
-        _ => NULL,
+        _ => Object::Null,
     }
 }
 
 fn native_bool_to_object(value: bool) -> Object {
     match value {
-        true => TRUE,
-        false => FALSE,
+        true => Object::new_true(),
+        false => Object::new_false(),
     }
 }
 
@@ -111,7 +107,7 @@ fn eval_if_expression(
     }
 
     match alternative {
-        None => NULL,
+        None => Object::Null,
         Some(stmt) => {
             return eval(StatementNode(*stmt));
         }
@@ -138,6 +134,6 @@ fn eval_infix_int_expression(lvalue: i64, operator: Operator, rvalue: i64) -> Ob
         Operator::Le => native_bool_to_object(lvalue <= rvalue),
         Operator::Gt => native_bool_to_object(lvalue > rvalue),
         Operator::Ge => native_bool_to_object(lvalue >= rvalue),
-        _ => NULL,
+        _ => Object::Null,
     }
 }
