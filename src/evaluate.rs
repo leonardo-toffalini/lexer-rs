@@ -5,10 +5,18 @@ use crate::object::Object;
 
 pub fn eval(node: ast::Node) -> Object {
     match node {
-        ProgramNode(Program { statements }) => evaluate_statements(statements),
+        ProgramNode(Program { statements }) => evaluate_program(statements),
 
         StatementNode(Statement::ExpressionStatement { expr }) => eval(ExpressionNode(expr)),
-        StatementNode(Statement::BlockStatement { statements }) => evaluate_statements(statements),
+        StatementNode(Statement::BlockStatement { statements }) => {
+            evaluate_block_statement(statements)
+        }
+        StatementNode(Statement::ReturnStatement { value }) => {
+            let val = eval(ExpressionNode(value));
+            Object::ReturnValue {
+                value: Box::new(val),
+            }
+        }
 
         ExpressionNode(Expression::IntegerLiteral { value }) => Object::Integer { value },
         ExpressionNode(Expression::Boolean { value }) => native_bool_to_object(value),
@@ -38,11 +46,27 @@ pub fn eval(node: ast::Node) -> Object {
     }
 }
 
-fn evaluate_statements(statements: Vec<Statement>) -> Object {
+fn evaluate_program(statements: Vec<Statement>) -> Object {
     let mut result = Object::Null;
 
     for statement in statements {
         result = eval(StatementNode(statement));
+        if let Object::ReturnValue { value } = result {
+            return *value;
+        }
+    }
+
+    return result;
+}
+
+fn evaluate_block_statement(statements: Vec<Statement>) -> Object {
+    let mut result = Object::Null;
+
+    for statement in statements {
+        result = eval(StatementNode(statement));
+        if let Object::ReturnValue { value: _value } = &result {
+            return result;
+        }
     }
 
     return result;

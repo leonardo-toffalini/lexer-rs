@@ -778,4 +778,31 @@ let adder = fn(a, b) {
             assert_eq!(result, *expected);
         }
     }
+
+    #[test]
+    fn eval_return_statement_test() {
+        let sources = vec![
+            "return 10;",
+            "return 10; 9;",
+            "return 2 * 5; 9;",
+            "9; return 2 * 5; 9;",
+            "if (10 > 1) { if (10 > 1) { return 10; } return 1; }",
+        ];
+
+        let expecteds = vec![
+            Object::Integer { value: 10 },
+            Object::Integer { value: 10 },
+            Object::Integer { value: 10 },
+            Object::Integer { value: 10 },
+            Object::Integer { value: 10 },
+        ];
+
+        for (source, expected) in sources.iter().zip(expecteds.iter()) {
+            let tokens = lexer::lex(source).unwrap();
+            let mut parser = parser::Parser::new(tokens);
+            let program = parser.parse();
+            let result = eval(ast::Node::ProgramNode(program));
+            assert_eq!(result, *expected);
+        }
+    }
 }
