@@ -1,11 +1,12 @@
-use crate::evaluate::eval;
 use std::{env, fs::File, io, io::Read};
 
 pub mod ast;
+pub mod environment;
 pub mod evaluate;
 pub mod lexer;
 pub mod object;
 pub mod parser;
+pub mod repl;
 pub mod token;
 
 fn read_file_contents(path: &str) -> Result<String, io::Error> {
@@ -18,6 +19,11 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 fn main() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
     let mode = &args[1];
+
+    if mode.as_str() == "repl" {
+        repl::run();
+        return Ok(());
+    }
 
     let contents = match mode.as_str() {
         "inline" => &args[2],
@@ -54,7 +60,7 @@ fn main() -> Result<(), String> {
         println!("\nHere are the errors we collected: \n{:#?}", parser.errors);
     }
 
-    let eval_result = eval(ast::Node::ProgramNode(program));
+    let eval_result = evaluate::eval(ast::Node::ProgramNode(program));
     println!("\nEval result:\n{:#?}", eval_result);
 
     Ok(())
