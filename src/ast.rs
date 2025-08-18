@@ -6,7 +6,7 @@ pub enum Node {
     ExpressionNode(Expression),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Operator {
     Plus,
     Minus,

@@ -5,6 +5,7 @@ pub enum Object {
     Integer { value: i64 },
     Boolean { value: bool },
     ReturnValue { value: Box<Object> },
+    Error { message: String },
     Null,
 }
 
@@ -23,7 +24,20 @@ impl fmt::Display for Object {
             Object::Integer { value } => write!(f, "{value}"),
             Object::Boolean { value } => write!(f, "{value}"),
             Object::ReturnValue { value } => write!(f, "{value}"),
+            Object::Error { message } => write!(f, "Error: {message}"),
             Object::Null => write!(f, ""),
+        }
+    }
+}
+
+impl Object {
+    pub fn mytype(self: &Self) -> &str {
+        match self {
+            Object::Integer { value: _ } => "Integer",
+            Object::Boolean { value: _ } => "Boolean",
+            Object::ReturnValue { value: _ } => "ReturnValue",
+            Object::Error { message: _ } => "Error",
+            Object::Null => "Null",
         }
     }
 }

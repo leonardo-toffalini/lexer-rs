@@ -3,6 +3,7 @@ use crate::ast::{self, Operator, Statement};
 use crate::ast::{Expression, Program};
 use crate::environment::Env;
 use crate::object::Object;
+use std::mem;
 
 pub fn eval(node: ast::Node, env: &mut Env) -> Object {
     match node {
@@ -92,7 +93,9 @@ fn eval_prefix_expression(operator: Operator, right: Object) -> Object {
     match operator {
         Operator::Bang => eval_bang_operator(right),
         Operator::Minus => eval_minus_operator(right),
-        _ => Object::Null,
+        _ => Object::Error {
+            message: format!("Unrecognized prefix operator: {operator}"),
+        },
     }
 }
 
@@ -103,7 +106,27 @@ fn eval_infix_expression(left: Object, operator: Operator, right: Object) -> Obj
         }
         (left, Operator::Eq, right) => native_bool_to_object(left == right),
         (left, Operator::Neq, right) => native_bool_to_object(left != right),
-        _ => Object::Null,
+        (left, _, right) => {
+            if mem::discriminant(&left) != mem::discriminant(&right) {
+                Object::Error {
+                    message: format!(
+                        "Type mismatch: {} {} {}",
+                        left.mytype(),
+                        operator,
+                        right.mytype()
+                    ),
+                }
+            } else {
+                Object::Error {
+                    message: format!(
+                        "Unknown operator: {} {} {}",
+                        left.mytype(),
+                        operator,
+                        right.mytype()
+                    ),
+                }
+            }
+        }
     }
 }
 
@@ -175,6 +198,8 @@ fn eval_infix_int_expression(lvalue: i64, operator: Operator, rvalue: i64) -> Ob
         Operator::Le => native_bool_to_object(lvalue <= rvalue),
         Operator::Gt => native_bool_to_object(lvalue > rvalue),
         Operator::Ge => native_bool_to_object(lvalue >= rvalue),
-        _ => Object::Null,
+        _ => Object::Error {
+            message: String::from("Unrecognized infix int operator: {operator}"),
+        },
     }
 }
