@@ -1,11 +1,12 @@
 use std::io::{self, BufRead, Write};
 
-use crate::{ast, evaluate, lexer, parser};
+use crate::{ast, environment, evaluate, lexer, parser};
 
 pub fn run() -> () {
     println!("Hello from the REPL!\nType 'exit' to quit the program.");
     let stdin = io::stdin();
     let mut stdout = io::stdout();
+    let mut env = environment::Env::new();
 
     loop {
         let mut line = String::new();
@@ -42,7 +43,7 @@ pub fn run() -> () {
             println!("\nHere are the errors we collected: \n{:#?}", parser.errors);
         }
 
-        let eval_result = evaluate::eval(ast::Node::ProgramNode(program));
+        let eval_result = evaluate::eval(ast::Node::ProgramNode(program), &mut env);
         println!("{}", eval_result);
     }
 }

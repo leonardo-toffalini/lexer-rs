@@ -60,7 +60,8 @@ fn main() -> Result<(), String> {
         println!("\nHere are the errors we collected: \n{:#?}", parser.errors);
     }
 
-    let eval_result = evaluate::eval(ast::Node::ProgramNode(program));
+    let mut env = environment::Env::new();
+    let eval_result = evaluate::eval(ast::Node::ProgramNode(program), &mut env);
     println!("\nEval result:\n{:#?}", eval_result);
 
     Ok(())
@@ -69,12 +70,12 @@ fn main() -> Result<(), String> {
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::ast;
     use crate::evaluate::eval;
     use crate::lexer;
     use crate::object::Object;
     use crate::parser;
     use crate::token::{Token, TokenType};
+    use crate::{ast, environment};
 
     #[test]
     fn lex_int_lit_test() {
@@ -660,7 +661,8 @@ let adder = fn(a, b) {
         let tokens = lexer::lex(source).unwrap();
         let mut parser = parser::Parser::new(tokens);
         let program = parser.parse();
-        let result = eval(ast::Node::ProgramNode(program));
+        let mut env = environment::Env::new();
+        let result = eval(ast::Node::ProgramNode(program), &mut env);
         let expected = Object::Integer { value: 123 };
         assert_eq!(result, expected);
     }
@@ -679,7 +681,8 @@ let adder = fn(a, b) {
             let tokens = lexer::lex(source).unwrap();
             let mut parser = parser::Parser::new(tokens);
             let program = parser.parse();
-            let result = eval(ast::Node::ProgramNode(program));
+            let mut env = environment::Env::new();
+            let result = eval(ast::Node::ProgramNode(program), &mut env);
             assert_eq!(result, *expected);
         }
     }
@@ -697,7 +700,8 @@ let adder = fn(a, b) {
             let tokens = lexer::lex(source).unwrap();
             let mut parser = parser::Parser::new(tokens);
             let program = parser.parse();
-            let result = eval(ast::Node::ProgramNode(program));
+            let mut env = environment::Env::new();
+            let result = eval(ast::Node::ProgramNode(program), &mut env);
             assert_eq!(result, *expected);
         }
     }
@@ -725,7 +729,8 @@ let adder = fn(a, b) {
             let tokens = lexer::lex(source).unwrap();
             let mut parser = parser::Parser::new(tokens);
             let program = parser.parse();
-            let result = eval(ast::Node::ProgramNode(program));
+            let mut env = environment::Env::new();
+            let result = eval(ast::Node::ProgramNode(program), &mut env);
             assert_eq!(result, *expected);
         }
     }
@@ -749,7 +754,8 @@ let adder = fn(a, b) {
             let tokens = lexer::lex(source).unwrap();
             let mut parser = parser::Parser::new(tokens);
             let program = parser.parse();
-            let result = eval(ast::Node::ProgramNode(program));
+            let mut env = environment::Env::new();
+            let result = eval(ast::Node::ProgramNode(program), &mut env);
             assert_eq!(result, *expected);
         }
     }
@@ -780,7 +786,8 @@ let adder = fn(a, b) {
             let tokens = lexer::lex(source).unwrap();
             let mut parser = parser::Parser::new(tokens);
             let program = parser.parse();
-            let result = eval(ast::Node::ProgramNode(program));
+            let mut env = environment::Env::new();
+            let result = eval(ast::Node::ProgramNode(program), &mut env);
             assert_eq!(result, *expected);
         }
     }
@@ -807,7 +814,8 @@ let adder = fn(a, b) {
             let tokens = lexer::lex(source).unwrap();
             let mut parser = parser::Parser::new(tokens);
             let program = parser.parse();
-            let result = eval(ast::Node::ProgramNode(program));
+            let mut env = environment::Env::new();
+            let result = eval(ast::Node::ProgramNode(program), &mut env);
             assert_eq!(result, *expected);
         }
     }

@@ -1,20 +1,31 @@
 use crate::ast::Node::{ExpressionNode, ProgramNode, StatementNode};
 use crate::ast::{self, Operator, Statement};
 use crate::ast::{Expression, Program};
+use crate::environment::Env;
 use crate::object::Object;
 
-pub fn eval(node: ast::Node) -> Object {
+pub fn eval(node: ast::Node, env: &mut Env) -> Object {
     match node {
-        ProgramNode(Program { statements }) => evaluate_program(statements),
+        ProgramNode(Program { statements }) => evaluate_program(statements, env),
 
-        StatementNode(Statement::ExpressionStatement { expr }) => eval(ExpressionNode(expr)),
+        StatementNode(Statement::ExpressionStatement { expr }) => eval(ExpressionNode(expr), env),
         StatementNode(Statement::BlockStatement { statements }) => {
-            evaluate_block_statement(statements)
+            evaluate_block_statement(statements, env)
         }
         StatementNode(Statement::ReturnStatement { value }) => {
-            let val = eval(ExpressionNode(value));
+            let val = eval(ExpressionNode(value), env);
             Object::ReturnValue {
                 value: Box::new(val),
+            }
+        }
+        StatementNode(Statement::LetStatement { name, value }) => {
+            let val = eval(ExpressionNode(value), env);
+            match name {
+                Expression::Identifier { name } => match env.set(name, val.clone()) {
+                    Some(v) => v,
+                    None => val,
+                },
+                _ => val,
             }
         }
 
@@ -24,10 +35,10 @@ pub fn eval(node: ast::Node) -> Object {
             condition,
             consequence,
             alternative,
-        }) => eval_if_expression(condition, consequence, alternative),
+        }) => eval_if_expression(condition, consequence, alternative, env),
 
         ExpressionNode(Expression::PrefixExpression { operator, right }) => {
-            let right = eval(ExpressionNode(*right));
+            let right = eval(ExpressionNode(*right), env);
             eval_prefix_expression(operator, right)
         }
 
@@ -36,21 +47,26 @@ pub fn eval(node: ast::Node) -> Object {
             operator,
             right,
         }) => {
-            let left = eval(ExpressionNode(*left));
-            let right = eval(ExpressionNode(*right));
+            let left = eval(ExpressionNode(*left), env);
+            let right = eval(ExpressionNode(*right), env);
             eval_infix_expression(left, operator, right)
         }
 
+        ExpressionNode(Expression::Identifier { name }) => match env.get(name) {
+            Some(val) => val.clone(),
+            None => panic!("Identifier not found"),
+        },
+
         ExpressionNode(_expr) => panic!("Not implemented!"),
-        StatementNode(_stmt) => panic!("Not implemented!"),
+        // StatementNode(_stmt) => panic!("Not implemented!"),
     }
 }
 
-fn evaluate_program(statements: Vec<Statement>) -> Object {
+fn evaluate_program(statements: Vec<Statement>, env: &mut Env) -> Object {
     let mut result = Object::Null;
 
     for statement in statements {
-        result = eval(StatementNode(statement));
+        result = eval(StatementNode(statement), env);
         if let Object::ReturnValue { value } = result {
             return *value;
         }
@@ -59,11 +75,11 @@ fn evaluate_program(statements: Vec<Statement>) -> Object {
     return result;
 }
 
-fn evaluate_block_statement(statements: Vec<Statement>) -> Object {
+fn evaluate_block_statement(statements: Vec<Statement>, env: &mut Env) -> Object {
     let mut result = Object::Null;
 
     for statement in statements {
-        result = eval(StatementNode(statement));
+        result = eval(StatementNode(statement), env);
         if let Object::ReturnValue { value: _value } = &result {
             return result;
         }
@@ -122,9 +138,10 @@ fn eval_if_expression(
     condition: Box<Expression>,
     consequence: Box<Statement>,
     alternative: Option<Box<Statement>>,
+    env: &mut Env,
 ) -> Object {
-    let cond_obj = eval(ExpressionNode(*condition));
-    let cons_obj = eval(StatementNode(*consequence));
+    let cond_obj = eval(ExpressionNode(*condition), env);
+    let cons_obj = eval(StatementNode(*consequence), env);
 
     if is_truthy(cond_obj) {
         return cons_obj;
@@ -133,7 +150,7 @@ fn eval_if_expression(
     match alternative {
         None => Object::Null,
         Some(stmt) => {
-            return eval(StatementNode(*stmt));
+            return eval(StatementNode(*stmt), env);
         }
     }
 }

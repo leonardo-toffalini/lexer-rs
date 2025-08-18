@@ -12,11 +12,11 @@ impl Env {
         }
     }
 
-    pub fn get(env: &Env, name: String) -> Option<&Object> {
-        env.store.get(&name)
+    pub fn get(self: &Self, name: String) -> Option<&Object> {
+        self.store.get(&name)
     }
 
-    pub fn set(env: &mut Env, name: String, val: Object) -> Option<Object> {
-        env.store.insert(name, val)
+    pub fn set(self: &mut Self, name: String, val: Object) -> Option<Object> {
+        self.store.insert(name, val)
     }
 }
