@@ -31,7 +31,7 @@ pub fn eval(node: ast::Node, env: &mut Env) -> Object {
 
             match name {
                 Expression::Identifier { name } => {
-                    env.set(name, val);
+                    env.set(&name, val);
                     Object::Null
                 }
                 _ => Object::Error {
@@ -76,18 +76,96 @@ pub fn eval(node: ast::Node, env: &mut Env) -> Object {
             eval_infix_expression(left, operator, right)
         }
 
-        ExpressionNode(Expression::Identifier { name }) => match env.get(name.clone()) {
+        ExpressionNode(Expression::Identifier { name }) => match env.get(&name) {
             Some(val) => val.clone(),
             None => Object::Error {
                 message: format!("Identifier not found: {}", name),
             },
         },
 
-        ExpressionNode(expr) => Object::Error {
-            message: format!("Not implemented: {}", expr),
+        ExpressionNode(Expression::FunctionLiteral { parameters, body }) => Object::Function {
+            parameters,
+            body: *body,
+            env: env.clone(),
         },
-        // StatementNode(_stmt) => panic!("Not implemented!"),
+
+        ExpressionNode(Expression::CallExpression {
+            function,
+            arguments,
+        }) => {
+            let func = eval(ExpressionNode(*function), env);
+            if matches!(func, Object::Error { .. }) {
+                return func;
+            }
+            let args = eval_expressions(arguments, env);
+            if matches!(args[0], Object::Error { .. }) {
+                return args[0].clone();
+            }
+
+            return apply_function(func, args);
+        }
     }
+}
+
+fn apply_function(func: Object, args: Vec<Object>) -> Object {
+    match func {
+        Object::Function {
+            parameters: ref _parameters,
+            ref body,
+            env: ref _env,
+        } => {
+            let mut extended_env = extend_function_env(&func, args);
+            let val = eval(StatementNode(body.clone()), &mut extended_env);
+            unwrap_return_value(val)
+        }
+        _ => Object::Error {
+            message: format!("Not a function"),
+        },
+    }
+}
+
+fn extend_function_env(func: &Object, args: Vec<Object>) -> Env {
+    match func {
+        Object::Function {
+            parameters,
+            body: _body,
+            env,
+        } => {
+            let mut env = Env::new_enclosed(env.clone());
+
+            for (idx, val) in parameters.iter().enumerate() {
+                match val {
+                    Expression::Identifier { name } => env.set(&name, args[idx].clone()),
+                    _ => (),
+                }
+            }
+
+            return env;
+        }
+        _ => Env::new(),
+    }
+}
+
+fn unwrap_return_value(val: Object) -> Object {
+    if let Object::ReturnValue { value } = val {
+        return *value;
+    }
+
+    return val;
+}
+
+fn eval_expressions(exprs: Vec<Expression>, env: &mut Env) -> Vec<Object> {
+    let mut result: Vec<Object> = Vec::new();
+
+    for expr in exprs {
+        let val = eval(ExpressionNode(expr), env);
+        if matches!(val, Object::Error { .. }) {
+            return vec![val];
+        }
+        result.push(val);
+    }
+
+    return result;
 }
 
 fn evaluate_program(statements: Vec<Statement>, env: &mut Env) -> Object {
