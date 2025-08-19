@@ -1,6 +1,7 @@
 use crate::object::Object;
 use std::collections::HashMap;
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Env {
     store: HashMap<String, Object>,
 }
@@ -16,7 +17,7 @@ impl Env {
         self.store.get(&name)
     }
 
-    pub fn set(self: &mut Self, name: String, val: Object) -> Option<Object> {
-        self.store.insert(name, val)
+    pub fn set(self: &mut Self, name: String, val: Object) -> () {
+        self.store.insert(name, val);
     }
 }

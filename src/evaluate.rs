@@ -15,18 +15,29 @@ pub fn eval(node: ast::Node, env: &mut Env) -> Object {
         }
         StatementNode(Statement::ReturnStatement { value }) => {
             let val = eval(ExpressionNode(value), env);
+            if matches!(val, Object::Error { .. }) {
+                return val;
+            }
+
             Object::ReturnValue {
                 value: Box::new(val),
             }
         }
         StatementNode(Statement::LetStatement { name, value }) => {
             let val = eval(ExpressionNode(value), env);
+            if matches!(val, Object::Error { .. }) {
+                return val;
+            }
+
             match name {
-                Expression::Identifier { name } => match env.set(name, val.clone()) {
-                    Some(v) => v,
-                    None => val,
+                Expression::Identifier { name } => {
+                    env.set(name, val);
+                    Object::Null
+                }
+                _ => Object::Error {
+                    message: "Did not find identifier on the right side of let statement"
+                        .to_string(),
                 },
-                _ => val,
             }
         }
 
@@ -40,6 +51,10 @@ pub fn eval(node: ast::Node, env: &mut Env) -> Object {
 
         ExpressionNode(Expression::PrefixExpression { operator, right }) => {
             let right = eval(ExpressionNode(*right), env);
+            if matches!(right, Object::Error { .. }) {
+                return right;
+            }
+
             eval_prefix_expression(operator, right)
         }
 
@@ -49,16 +64,28 @@ pub fn eval(node: ast::Node, env: &mut Env) -> Object {
             right,
         }) => {
             let left = eval(ExpressionNode(*left), env);
+            if matches!(left, Object::Error { .. }) {
+                return left;
+            }
+
             let right = eval(ExpressionNode(*right), env);
+            if matches!(right, Object::Error { .. }) {
+                return right;
+            }
+
             eval_infix_expression(left, operator, right)
         }
 
-        ExpressionNode(Expression::Identifier { name }) => match env.get(name) {
+        ExpressionNode(Expression::Identifier { name }) => match env.get(name.clone()) {
             Some(val) => val.clone(),
-            None => panic!("Identifier not found"),
+            None => Object::Error {
+                message: format!("Identifier not found: {}", name),
+            },
         },
 
-        ExpressionNode(_expr) => panic!("Not implemented!"),
+        ExpressionNode(expr) => Object::Error {
+            message: format!("Not implemented: {}", expr),
+        },
         // StatementNode(_stmt) => panic!("Not implemented!"),
     }
 }
@@ -71,6 +98,9 @@ fn evaluate_program(statements: Vec<Statement>, env: &mut Env) -> Object {
         if let Object::ReturnValue { value } = result {
             return *value;
         }
+        if matches!(result, Object::Error { .. }) {
+            return result;
+        }
     }
 
     return result;
@@ -82,6 +112,9 @@ fn evaluate_block_statement(statements: Vec<Statement>, env: &mut Env) -> Object
     for statement in statements {
         result = eval(StatementNode(statement), env);
         if let Object::ReturnValue { value: _value } = &result {
+            return result;
+        }
+        if matches!(result, Object::Error { .. }) {
             return result;
         }
     }
@@ -164,6 +197,10 @@ fn eval_if_expression(
     env: &mut Env,
 ) -> Object {
     let cond_obj = eval(ExpressionNode(*condition), env);
+    if matches!(cond_obj, Object::Error { .. }) {
+        return cond_obj;
+    }
+
     let cons_obj = eval(StatementNode(*consequence), env);
 
     if is_truthy(cond_obj) {

@@ -1,11 +1,27 @@
 use std::fmt;
 
-#[derive(Debug, Clone, PartialEq)]
+use crate::ast::{Expression, Statement};
+use crate::environment::Env;
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum Object {
-    Integer { value: i64 },
-    Boolean { value: bool },
-    ReturnValue { value: Box<Object> },
-    Error { message: String },
+    Integer {
+        value: i64,
+    },
+    Boolean {
+        value: bool,
+    },
+    ReturnValue {
+        value: Box<Object>,
+    },
+    Function {
+        parameters: Vec<Expression>,
+        body: Statement,
+        env: Env,
+    },
+    Error {
+        message: String,
+    },
     Null,
 }
 
@@ -24,6 +40,7 @@ impl fmt::Display for Object {
             Object::Integer { value } => write!(f, "{value}"),
             Object::Boolean { value } => write!(f, "{value}"),
             Object::ReturnValue { value } => write!(f, "{value}"),
+            Object::Function { .. } => write!(f, "function"), // todo
             Object::Error { message } => write!(f, "Error: {message}"),
             Object::Null => write!(f, ""),
         }
@@ -33,10 +50,11 @@ impl fmt::Display for Object {
 impl Object {
     pub fn mytype(self: &Self) -> &str {
         match self {
-            Object::Integer { value: _ } => "Integer",
-            Object::Boolean { value: _ } => "Boolean",
-            Object::ReturnValue { value: _ } => "ReturnValue",
-            Object::Error { message: _ } => "Error",
+            Object::Integer { .. } => "Integer",
+            Object::Boolean { .. } => "Boolean",
+            Object::ReturnValue { .. } => "ReturnValue",
+            Object::Function { .. } => "Function",
+            Object::Error { .. } => "Error",
             Object::Null => "Null",
         }
     }

@@ -10,7 +10,7 @@ pub fn run() -> () {
 
     loop {
         let mut line = String::new();
-        print!("> ");
+        print!(">> ");
         stdout.flush().unwrap();
         stdin.lock().read_line(&mut line).unwrap();
         line = line.trim_end().to_string();

@@ -21,7 +21,7 @@ pub enum Operator {
     Ge,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
     LetStatement { name: Expression, value: Expression },
     ReturnStatement { value: Expression },
@@ -29,7 +29,7 @@ pub enum Statement {
     BlockStatement { statements: Vec<Statement> },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Identifier {
         name: String,
@@ -71,7 +71,7 @@ pub enum Expression {
     },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Program {
     pub statements: Vec<Statement>,
 }
