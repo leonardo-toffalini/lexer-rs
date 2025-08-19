@@ -98,8 +98,10 @@ pub fn eval(node: ast::Node, env: &mut Env) -> Object {
                 return func;
             }
             let args = eval_expressions(arguments, env);
-            if matches!(args[0], Object::Error { .. }) {
-                return args[0].clone();
+            if !args.is_empty() {
+                if let Object::Error { .. } = args[0] {
+                    return args[0].clone();
+                }
             }
 
             return apply_function(func, args);
@@ -264,7 +266,9 @@ fn eval_bang_operator(right: Object) -> Object {
 fn eval_minus_operator(right: Object) -> Object {
     match right {
         Object::Integer { value } => Object::Integer { value: -value },
-        _ => panic!("Minus prefix oeprator used on not integer type"),
+        _ => Object::Error {
+            message: format!("Minus prefix operator cannot be applied to {}", right.mytype()),
+        },
     }
 }
 
@@ -314,7 +318,7 @@ fn eval_infix_int_expression(lvalue: i64, operator: Operator, rvalue: i64) -> Ob
         Operator::Gt => native_bool_to_object(lvalue > rvalue),
         Operator::Ge => native_bool_to_object(lvalue >= rvalue),
         _ => Object::Error {
-            message: String::from("Unrecognized infix int operator: {operator}"),
+            message: format!("Unrecognized infix int operator: {}", operator),
         },
     }
 }

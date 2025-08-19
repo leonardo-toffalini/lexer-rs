@@ -30,12 +30,21 @@ type InfixParseFn = for<'a> fn(&'a mut Parser, ast::Expression) -> Result<ast::E
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Parser {
-        let cur_token = tokens.get(0).unwrap();
-        let peek_token = tokens.get(1).unwrap();
+        if tokens.is_empty() {
+            panic!("Cannot create parser with empty token list");
+        }
+        
+        let cur_token = tokens[0].clone();
+        let peek_token = if tokens.len() > 1 {
+            tokens[1].clone()
+        } else {
+            Token::eof()
+        };
+        
         let mut parser = Parser {
             idx: 0,
-            cur_token: cur_token.clone(),
-            peek_token: peek_token.clone(),
+            cur_token,
+            peek_token,
             tokens,
             errors: Vec::new(),
             prefix_parse_fns: HashMap::new(),
@@ -204,9 +213,9 @@ impl Parser {
         let mut left_expr = prefix(self)?;
 
         while !self.peek_token_is(TokenType::Semicolon) && prec < self.peek_precedence() {
-            let infix_fn_key = self.peek_token.ttype.clone();
+            let infix_fn_key = self.peek_token.ttype;
             let infix = match self.infix_parse_fns.get(&infix_fn_key) {
-                Some(func) => func.clone(),
+                Some(func) => *func,
                 None => break,
             };
 
@@ -214,13 +223,13 @@ impl Parser {
             left_expr = infix(self, left_expr)?;
         }
 
-        return Ok(left_expr);
+        Ok(left_expr)
     }
 
     fn parse_identifier(self: &mut Self) -> Result<ast::Expression, String> {
-        return Ok(ast::Expression::Identifier {
+        Ok(ast::Expression::Identifier {
             name: self.cur_token.literal.clone(),
-        });
+        })
     }
 
     fn parse_integer_literal(self: &mut Self) -> Result<ast::Expression, String> {
@@ -230,38 +239,38 @@ impl Parser {
             .clone()
             .parse::<i64>()
             .map_err(|e| e.to_string())?;
-        return Ok(ast::Expression::IntegerLiteral { value: int_lit });
+        Ok(ast::Expression::IntegerLiteral { value: int_lit })
     }
 
     fn parse_boolean(self: &mut Self) -> Result<ast::Expression, String> {
-        return Ok(ast::Expression::Boolean {
+        Ok(ast::Expression::Boolean {
             value: self.cur_token_is(TokenType::TRUE),
-        });
+        })
     }
 
     fn parse_grouped_expression(self: &mut Self) -> Result<ast::Expression, String> {
         self.next_token();
-        let expr = self.parse_expression(Precedence::Lowest);
+        let expr = self.parse_expression(Precedence::Lowest)?;
         if !self.expect_peek(TokenType::RParen) {
-            panic!("expected TokenType::RParen");
+            return Err("Expected ')' after grouped expression".to_string());
         }
-        return expr;
+        Ok(expr)
     }
 
     fn parse_if_expression(self: &mut Self) -> Result<ast::Expression, String> {
         if !self.expect_peek(TokenType::LParen) {
-            panic!("expected TokenType::LParen");
+            return Err("Expected '(' after 'if'".to_string());
         }
 
         self.next_token();
         let cond = self.parse_expression(Precedence::Lowest)?;
 
         if !self.expect_peek(TokenType::RParen) {
-            panic!("expected TokenType::RParen");
+            return Err("Expected ')' after if condition".to_string());
         }
 
         if !self.expect_peek(TokenType::LBrace) {
-            panic!("expected TokenType::LBrace");
+            return Err("Expected '{' after if condition".to_string());
         }
 
         let cons = self.parse_block_statement();
@@ -270,7 +279,7 @@ impl Parser {
             self.next_token();
 
             if !self.expect_peek(TokenType::LBrace) {
-                panic!("expected TokenType::LBrace");
+                return Err("Expected '{' after 'else'".to_string());
             }
             return Ok(ast::Expression::IfExpression {
                 condition: Box::new(cond),
@@ -336,7 +345,8 @@ impl Parser {
         }
 
         if !self.expect_peek(TokenType::RParen) {
-            panic!("Expected TokenType::RParen in parse_function_parameters");
+            // Note: This should ideally return a Result, but keeping current signature for now
+            self.errors.push("Expected ')' after function parameters".to_string());
         }
 
         return identifiers;
@@ -387,7 +397,7 @@ impl Parser {
         }
 
         if !self.expect_peek(TokenType::RParen) {
-            panic!("Expected TokenType::RParen in parse_call_arguments");
+            return Err("Expected ')' after function arguments".to_string());
         }
 
         return Ok(args);

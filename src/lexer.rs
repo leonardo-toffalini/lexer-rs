@@ -15,7 +15,7 @@ static KW_MAP: Lazy<HashMap<&'static str, TokenType>> = Lazy::new(|| {
     map.insert("if", TokenType::If);
     map.insert("else", TokenType::Else);
     map.insert("return", TokenType::Return);
-    return map;
+    map
 });
 
 pub fn lex(source: &str) -> Result<Vec<Token>, String> {
@@ -180,7 +180,7 @@ pub fn lex(source: &str) -> Result<Vec<Token>, String> {
         }
     }
 
-    return Ok(tokens);
+    Ok(tokens)
 }
 
 fn lex_ident(chars: &mut Peekable<Chars>, first_char: char) -> String {
@@ -196,7 +196,7 @@ fn lex_ident(chars: &mut Peekable<Chars>, first_char: char) -> String {
         }
     }
 
-    return ident;
+    ident
 }
 
 enum Numeric {
@@ -223,23 +223,24 @@ fn lex_int_lit(chars: &mut Peekable<Chars>, first_char: char) -> Numeric {
         }
     }
 
-    return if float_flag {
+    if float_flag {
         Numeric::Float(literal)
     } else {
         Numeric::Int(literal)
-    };
+    }
 }
 
 fn lex_str_lit(chars: &mut Peekable<Chars>) -> Result<String, String> {
-    let mut int_lit = String::from("");
+    let mut str_lit = String::new();
 
-    loop {
-        match chars.next() {
-            Some('"') => return Ok(int_lit),
-            Some(c) => int_lit.push(c),
-            None => return Err(String::from("Lexical Error: Unterminated string literal.")),
+    while let Some(ch) = chars.next() {
+        match ch {
+            '"' => return Ok(str_lit),
+            c => str_lit.push(c),
         }
     }
+    
+    Err("Unterminated string literal".to_string())
 }
 
 fn lookup_keyword(ident: &str) -> TokenType {

@@ -13,32 +13,43 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
     let mut file = File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    return Ok(contents);
+    Ok(contents)
 }
 
 fn main() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
+    
+    if args.len() < 2 {
+        return Err("Usage: lexer-rs <mode> [content/file]\nModes: repl, inline, file".to_string());
+    }
+    
     let mode = &args[1];
 
     if mode.as_str() == "repl" {
         repl::run();
         return Ok(());
     }
+    
+    if args.len() < 3 {
+        return Err("Content or file path required for inline/file modes".to_string());
+    }
 
     let contents = match mode.as_str() {
-        "inline" => &args[2],
-        "file" => &read_file_contents(&args[2]).unwrap(),
-        m => panic!("Invalid mode: {}, valid modes are 'inline' and 'file'.", m),
+        "inline" => args[2].clone(),
+        "file" => read_file_contents(&args[2])
+            .map_err(|e| format!("Failed to read file '{}': {}", &args[2], e))?,
+        m => return Err(format!("Invalid mode: '{}'. Valid modes are 'repl', 'inline', and 'file'.", m)),
     };
 
     println!("File contents:\n{}", contents);
 
-    let tokens = lexer::lex(&contents).unwrap();
+    let tokens = lexer::lex(&contents)
+        .map_err(|e| format!("Lexing error: {}", e))?;
 
     let mut parser = parser::Parser::new(tokens.clone());
     let program = parser.parse();
 
-    if parser.errors.len() == 0 {
+    if parser.errors.is_empty() {
         println!("\nProgram: \n{}", program);
         println!("\nAST: \n{:#?}", program);
     } else {
