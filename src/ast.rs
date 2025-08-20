@@ -39,6 +39,14 @@ pub enum Expression {
         value: i64,
     },
 
+    FloatLiteral {
+        value: f64,
+    },
+
+    StringLiteral {
+        value: String,
+    },
+
     PrefixExpression {
         operator: Operator,
         right: Box<Expression>,
@@ -143,6 +151,8 @@ impl fmt::Display for Expression {
         match self {
             Expression::Identifier { name } => write!(f, "{}", name)?,
             Expression::IntegerLiteral { value } => write!(f, "{}", value)?,
+            Expression::FloatLiteral { value } => write!(f, "{}", value)?,
+            Expression::StringLiteral { value } => write!(f, "{}", value)?,
             Expression::PrefixExpression { operator, right } => {
                 write!(f, "({}{})", operator, right)?
             }

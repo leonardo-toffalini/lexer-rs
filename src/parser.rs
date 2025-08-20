@@ -33,14 +33,14 @@ impl Parser {
         if tokens.is_empty() {
             panic!("Cannot create parser with empty token list");
         }
-        
+
         let cur_token = tokens[0].clone();
         let peek_token = if tokens.len() > 1 {
             tokens[1].clone()
         } else {
             Token::eof()
         };
-        
+
         let mut parser = Parser {
             idx: 0,
             cur_token,
@@ -88,6 +88,8 @@ impl Parser {
 
         parser.register_prefix(TokenType::Ident, Parser::parse_identifier);
         parser.register_prefix(TokenType::Int, Parser::parse_integer_literal);
+        parser.register_prefix(TokenType::Float, Parser::parse_float_literal);
+        parser.register_prefix(TokenType::String, Parser::parse_string_literal);
         parser.register_prefix(TokenType::Bang, Parser::parse_prefix_expression);
         parser.register_prefix(TokenType::Minus, Parser::parse_prefix_expression);
         parser.register_prefix(TokenType::TRUE, Parser::parse_boolean);
@@ -242,6 +244,26 @@ impl Parser {
         Ok(ast::Expression::IntegerLiteral { value: int_lit })
     }
 
+    fn parse_float_literal(self: &mut Self) -> Result<ast::Expression, String> {
+        let float_lit = self
+            .cur_token
+            .literal
+            .clone()
+            .parse::<f64>()
+            .map_err(|e| e.to_string())?;
+        Ok(ast::Expression::FloatLiteral { value: float_lit })
+    }
+
+    fn parse_string_literal(self: &mut Self) -> Result<ast::Expression, String> {
+        let string_lit = self
+            .cur_token
+            .literal
+            .clone()
+            .parse::<String>()
+            .map_err(|e| e.to_string())?;
+        Ok(ast::Expression::StringLiteral { value: string_lit })
+    }
+
     fn parse_boolean(self: &mut Self) -> Result<ast::Expression, String> {
         Ok(ast::Expression::Boolean {
             value: self.cur_token_is(TokenType::TRUE),
@@ -346,7 +368,8 @@ impl Parser {
 
         if !self.expect_peek(TokenType::RParen) {
             // Note: This should ideally return a Result, but keeping current signature for now
-            self.errors.push("Expected ')' after function parameters".to_string());
+            self.errors
+                .push("Expected ')' after function parameters".to_string());
         }
 
         return identifiers;

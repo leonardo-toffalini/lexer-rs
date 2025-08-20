@@ -18,18 +18,18 @@ fn read_file_contents(path: &str) -> Result<String, io::Error> {
 
 fn main() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() < 2 {
         return Err("Usage: lexer-rs <mode> [content/file]\nModes: repl, inline, file".to_string());
     }
-    
+
     let mode = &args[1];
 
     if mode.as_str() == "repl" {
         repl::run();
         return Ok(());
     }
-    
+
     if args.len() < 3 {
         return Err("Content or file path required for inline/file modes".to_string());
     }
@@ -38,13 +38,17 @@ fn main() -> Result<(), String> {
         "inline" => args[2].clone(),
         "file" => read_file_contents(&args[2])
             .map_err(|e| format!("Failed to read file '{}': {}", &args[2], e))?,
-        m => return Err(format!("Invalid mode: '{}'. Valid modes are 'repl', 'inline', and 'file'.", m)),
+        m => {
+            return Err(format!(
+                "Invalid mode: '{}'. Valid modes are 'repl', 'inline', and 'file'.",
+                m
+            ));
+        }
     };
 
     println!("File contents:\n{}", contents);
 
-    let tokens = lexer::lex(&contents)
-        .map_err(|e| format!("Lexing error: {}", e))?;
+    let tokens = lexer::lex(&contents).map_err(|e| format!("Lexing error: {}", e))?;
 
     let mut parser = parser::Parser::new(tokens.clone());
     let program = parser.parse();
@@ -700,11 +704,12 @@ let adder = fn(a, b) {
 
     #[test]
     fn eval_prefix_minus_test() {
-        let sources = vec!["-56;", "--42;", "---37;"];
+        let sources = vec!["-56;", "--42;", "---37;", "-3.14;"];
         let expecteds = vec![
             Object::Integer { value: -56 },
             Object::Integer { value: 42 },
             Object::Integer { value: -37 },
+            Object::Float { value: -3.14 },
         ];
 
         for (source, expected) in sources.iter().zip(expecteds.iter()) {
@@ -728,6 +733,43 @@ let adder = fn(a, b) {
             Object::Integer { value: 2 },
             Object::Integer { value: 40 },
             Object::Integer { value: 4 },
+            Object::Boolean { value: false },
+            Object::Boolean { value: true },
+            Object::Boolean { value: true },
+            Object::Boolean { value: true },
+            Object::Boolean { value: false },
+            Object::Boolean { value: false },
+        ];
+
+        for (source, expected) in sources.iter().zip(expecteds.iter()) {
+            let tokens = lexer::lex(source).unwrap();
+            let mut parser = parser::Parser::new(tokens);
+            let program = parser.parse();
+            let mut env = environment::Env::new();
+            let result = eval(ast::Node::ProgramNode(program), &mut env);
+            assert_eq!(result, *expected);
+        }
+    }
+
+    #[test]
+    fn eval_infix_float_test() {
+        let sources = vec![
+            "0.1 + 0.1;",
+            "0.3 - 0.1;",
+            "0.5 * 0.8;",
+            "0.12 / 0.3;",
+            "0.1 == 0.2;",
+            "0.1 != 0.2;",
+            "0.1 < 0.2;",
+            "0.1 <= 0.2;",
+            "0.1 > 0.2;",
+            "0.1 >= 0.2;",
+        ];
+        let expecteds = vec![
+            Object::Float { value: 0.2 },
+            Object::Float { value: 0.2 },
+            Object::Float { value: 0.4 },
+            Object::Float { value: 0.4 },
             Object::Boolean { value: false },
             Object::Boolean { value: true },
             Object::Boolean { value: true },

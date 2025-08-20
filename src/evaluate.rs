@@ -42,6 +42,8 @@ pub fn eval(node: ast::Node, env: &mut Env) -> Object {
         }
 
         ExpressionNode(Expression::IntegerLiteral { value }) => Object::Integer { value },
+        ExpressionNode(Expression::FloatLiteral { value }) => Object::Float { value },
+        ExpressionNode(Expression::StringLiteral { value }) => Object::String { value },
         ExpressionNode(Expression::Boolean { value }) => native_bool_to_object(value),
         ExpressionNode(Expression::IfExpression {
             condition,
@@ -217,6 +219,9 @@ fn eval_infix_expression(left: Object, operator: Operator, right: Object) -> Obj
         (Object::Integer { value: lvalue }, operator, Object::Integer { value: rvalue }) => {
             eval_infix_int_expression(lvalue, operator, rvalue)
         }
+        (Object::Float { value: lvalue }, operator, Object::Float { value: rvalue }) => {
+            eval_infix_float_expression(lvalue, operator, rvalue)
+        }
         (left, Operator::Eq, right) => native_bool_to_object(left == right),
         (left, Operator::Neq, right) => native_bool_to_object(left != right),
         (left, _, right) => {
@@ -266,8 +271,12 @@ fn eval_bang_operator(right: Object) -> Object {
 fn eval_minus_operator(right: Object) -> Object {
     match right {
         Object::Integer { value } => Object::Integer { value: -value },
+        Object::Float { value } => Object::Float { value: -value },
         _ => Object::Error {
-            message: format!("Minus prefix operator cannot be applied to {}", right.mytype()),
+            message: format!(
+                "Minus prefix operator cannot be applied to {}",
+                right.mytype()
+            ),
         },
     }
 }
@@ -309,6 +318,32 @@ fn eval_infix_int_expression(lvalue: i64, operator: Operator, rvalue: i64) -> Ob
             value: lvalue * rvalue,
         },
         Operator::Slash => Object::Integer {
+            value: lvalue / rvalue,
+        },
+        Operator::Eq => native_bool_to_object(lvalue == rvalue),
+        Operator::Neq => native_bool_to_object(lvalue != rvalue),
+        Operator::Lt => native_bool_to_object(lvalue < rvalue),
+        Operator::Le => native_bool_to_object(lvalue <= rvalue),
+        Operator::Gt => native_bool_to_object(lvalue > rvalue),
+        Operator::Ge => native_bool_to_object(lvalue >= rvalue),
+        _ => Object::Error {
+            message: format!("Unrecognized infix int operator: {}", operator),
+        },
+    }
+}
+
+fn eval_infix_float_expression(lvalue: f64, operator: Operator, rvalue: f64) -> Object {
+    match operator {
+        Operator::Plus => Object::Float {
+            value: lvalue + rvalue,
+        },
+        Operator::Minus => Object::Float {
+            value: lvalue - rvalue,
+        },
+        Operator::Star => Object::Float {
+            value: lvalue * rvalue,
+        },
+        Operator::Slash => Object::Float {
             value: lvalue / rvalue,
         },
         Operator::Eq => native_bool_to_object(lvalue == rvalue),
